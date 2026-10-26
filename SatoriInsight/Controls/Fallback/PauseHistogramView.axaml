@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:SatoriInsight.ViewModels" x:DataType="vm:MainViewModel" x:Class="SatoriInsight.Controls.PauseHistogramView">
+    <UserControl.Styles>
+        <Style Selector="TextBlock.pause-stat-label">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.pause-stat-value">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </UserControl.Styles>
+    <StackPanel Spacing="6">
+        <Grid ColumnDefinitions="*,Auto" Height="32">
+            <TextBlock Text="GC pause distribution" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="STOP THE WORLD" Classes="eyebrow" FontSize="8" VerticalAlignment="Center" />
+        </Grid>
+        <TextBlock Text="{Binding PauseCountLabel}" Classes="muted" FontSize="11" />
+        <Border Height="158" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="4">
+            <TextBlock Text="Pause histogram unavailable in this build." Classes="muted" FontSize="11"
+                HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="Auto,Auto" RowSpacing="8" Margin="0,3,0,0">
+            <StackPanel Spacing="2">
+                <TextBlock Text="p50" Classes="pause-stat-label" />
+                <TextBlock Text="{Binding P50Label}" Classes="pause-stat-value" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="2">
+                <TextBlock Text="p90" Classes="pause-stat-label" />
+                <TextBlock Text="{Binding P90Label}" Classes="pause-stat-value" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Spacing="2">
+                <TextBlock Text="p95" Classes="pause-stat-label" />
+                <TextBlock Text="{Binding P95Label}" Classes="pause-stat-value" />
+            </StackPanel>
+            <StackPanel Grid.Column="3" Spacing="2">
+                <TextBlock Text="p99" Classes="pause-stat-label" />
+                <TextBlock Text="{Binding P99WithUnitsLabel}" Classes="pause-stat-value" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Spacing="2">
+                <TextBlock Text="p99.9" Classes="pause-stat-label" />
+                <TextBlock Text="{Binding P999Label}" Classes="pause-stat-value" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="2">
+                <TextBlock Text="avg" Classes="pause-stat-label" />
+                <TextBlock Text="{Binding AveragePauseLabel}" Classes="pause-stat-value" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Grid.Column="2" Spacing="2">
+                <TextBlock Text="min" Classes="pause-stat-label" />
+                <TextBlock Text="{Binding MinPauseLabel}" Classes="pause-stat-value" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Grid.Column="3" Spacing="2">
+                <TextBlock Text="max" Classes="pause-stat-label" />
+                <TextBlock Text="{Binding MaxPauseLabel}" Classes="pause-stat-value" />
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</UserControl>

@@ -28,6 +28,7 @@ public partial class MemoryHistoryView : UserControl
         Background = Avalonia.Media.Brushes.Transparent;
         LayoutUpdated += (_, _) =>
         {
+#if AVALONIA_PRO
             var origin = PlotAreaProbe.TranslatePoint(new Point(), MemoryChart);
 
             if (origin is not { } point || PlotAreaProbe.Bounds.Width <= 0)
@@ -37,6 +38,7 @@ public partial class MemoryHistoryView : UserControl
 
             CollectionTimeline.LeftInset = point.X;
             CollectionTimeline.RightInset = Math.Max(0, MemoryChart.Bounds.Width - point.X - PlotAreaProbe.Bounds.Width);
+#endif
             CollectionSelection.Margin = new Thickness(CollectionTimeline.LeftInset, 0, CollectionTimeline.RightInset, 0);
         };
         CollectionTimeline.CollectionInvoked += gc =>
@@ -74,9 +76,11 @@ public partial class MemoryHistoryView : UserControl
             return;
         }
 
+        var bandPoint = e.GetPosition(CollectionTimeline);
+
+#if AVALONIA_PRO
         var chartPoint = e.GetPosition(MemoryChart);
         var plotOrigin = PlotAreaProbe.TranslatePoint(new Point(), MemoryChart);
-        var bandPoint = e.GetPosition(CollectionTimeline);
 
         if (plotOrigin is { } origin && new Rect(origin, PlotAreaProbe.Bounds.Size).Contains(chartPoint))
         {
@@ -84,7 +88,9 @@ public partial class MemoryHistoryView : UserControl
             _dragLeft = origin.X;
             _dragWidth = PlotAreaProbe.Bounds.Width;
         }
-        else if (new Rect(CollectionTimeline.Bounds.Size).Contains(bandPoint) && bandPoint.X >= CollectionTimeline.LeftInset
+        else
+#endif
+        if (new Rect(CollectionTimeline.Bounds.Size).Contains(bandPoint) && bandPoint.X >= CollectionTimeline.LeftInset
             && bandPoint.X <= CollectionTimeline.Bounds.Width - CollectionTimeline.RightInset)
         {
             _dragTrack = CollectionTimeline;

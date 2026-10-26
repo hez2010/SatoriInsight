@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:SatoriInsight.Controls" xmlns:vm="using:SatoriInsight.ViewModels" x:DataType="vm:MainViewModel"
+    x:Class="SatoriInsight.Controls.MemoryHistoryView">
+    <StackPanel Spacing="6">
+        <Grid ColumnDefinitions="*,Auto" Height="32">
+            <TextBlock Text="Heap &amp; collection timeline" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Name="ResetTimelineButton" Content="Reset" Click="Reset_Click" IsEnabled="{Binding HasTimelineSelection}"
+                Classes="secondary" Padding="10,5" AutomationProperties.Name="Reset timeline selection" />
+        </Grid>
+        <TextBlock Text="{Binding TimelineSelectionLabel}" Classes="muted" FontSize="11"
+            ToolTip.Tip="Click a time or drag a range. Memory sizes show the end of the selected range." />
+        <Border Height="110" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="4">
+            <TextBlock Text="Memory chart unavailable in this build." Classes="muted" FontSize="11"
+                HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <Grid Height="64">
+            <local:GcTimeline Name="CollectionTimeline" Events="{Binding TimelineEvents}" SelectedEvent="{Binding SelectedEvent}"
+                EndSeconds="{Binding ChartMaximumSeconds}" />
+            <local:TimelineSelectionOverlay Name="CollectionSelection" Start="{Binding TimelineSelectionStart}" End="{Binding TimelineSelectionEnd}"
+                Maximum="{Binding ChartMaximumSeconds}" IsHitTestVisible="False" />
+        </Grid>
+        <TextBlock Text="Click the timeline · drag a period · Reset to clear selection" Classes="muted" FontSize="10" HorizontalAlignment="Right" />
+    </StackPanel>
+</UserControl>

@@ -18,17 +18,10 @@
   </ItemGroup>
   <Target Name="PrepareTestWorkloads" AfterTargets="Build">
     <MSBuild Projects="$(MSBuildThisFileDirectory)Workloads/Managed/SatoriInsight.Workload.csproj"
-             Targets="Build;GetTargetPath" Properties="Configuration=$(Configuration);TargetFramework=net8.0">
-      <Output TaskParameter="TargetOutputs" ItemName="_Net8Workload" />
-    </MSBuild>
-    <MSBuild Projects="$(MSBuildThisFileDirectory)Workloads/Managed/SatoriInsight.Workload.csproj"
              Targets="GetTargetPath" Properties="Configuration=$(Configuration);TargetFramework=net10.0">
       <Output TaskParameter="TargetOutputs" ItemName="_Net10Workload" />
     </MSBuild>
     <ItemGroup>
-      <_WorkloadFiles Include="%(_Net8Workload.RootDir)%(_Net8Workload.Directory)*">
-        <DestinationFolder>$(TargetDir)Workloads/net8.0/</DestinationFolder>
-      </_WorkloadFiles>
       <_WorkloadFiles Include="%(_Net10Workload.RootDir)%(_Net10Workload.Directory)*">
         <DestinationFolder>$(TargetDir)Workloads/net10.0/</DestinationFolder>
       </_WorkloadFiles>

@@ -18,7 +18,7 @@
     </Application.Resources>
     <Application.Styles>
         <fa:FluentAvaloniaTheme PreferSystemTheme="False" CustomAccentColor="#B7EE81" />
-        <StyleInclude Source="avares://Avalonia.Controls.Markdown/Themes/Default.axaml" />
+        <StyleInclude Source="avares://SatoriInsight/Styles/AvaloniaProStyles.axaml" />
         <StyleInclude Source="avares://SatoriInsight/Styles/Theme.axaml" />
     </Application.Styles>
 </Application>

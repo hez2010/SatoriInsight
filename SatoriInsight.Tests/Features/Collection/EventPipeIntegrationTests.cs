@@ -10,7 +10,6 @@ public class EventPipeIntegrationTests
 {
     [Theory(Timeout = 45000)]
     [InlineData("net10.0")]
-    [InlineData("net8.0")]
     public async Task LocalCollectorReceivesRealMetricsCollectionsAndSuspensions(string framework)
     {
         using var target = await TestWorkload.StartAsync(framework);

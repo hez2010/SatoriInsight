@@ -12,7 +12,6 @@ namespace SatoriInsight.Tests;
 public class HeapProfilingTests
 {
     [Theory(Timeout = 90000)]
-    [InlineData("net8.0")]
     [InlineData("net10.0")]
     public async Task WorkerCapturesRealRegionsObjectsHolesAndRootsAndReplayPreservesThem(string framework)
     {

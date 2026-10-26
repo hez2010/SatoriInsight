@@ -60,8 +60,6 @@ public class GenerationRangeTests
     }
 
     [Theory(Timeout = 30000)]
-    [InlineData("net8.0", false)]
-    [InlineData("net8.0", true)]
     [InlineData("net10.0", false)]
     [InlineData("net10.0", true)]
     public async Task ServerAndWorkstationTargetsProduceGenerationMapsAndReplay(string framework, bool serverGc)

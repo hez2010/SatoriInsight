@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <Sdk Name="PublishWithSatoriGC" Version="10.0.14-satori.40308415116.1" />
 
@@ -20,6 +20,10 @@
     <Version>1.1.2</Version>
     <AssemblyVersion>1.1.2.0</AssemblyVersion>
     <FileVersion>1.1.2.0</FileVersion>
+    <!-- Contributors can build without the optional commercial controls. -->
+    <UseAvaloniaPro Condition="'$(UseAvaloniaPro)' == '' and '$(AvaloniaUILicenseKey)' != ''">true</UseAvaloniaPro>
+    <UseAvaloniaPro Condition="'$(UseAvaloniaPro)' == ''">false</UseAvaloniaPro>
+    <DefineConstants Condition="'$(UseAvaloniaPro)' == 'true'">$(DefineConstants);AVALONIA_PRO</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,9 +31,7 @@
     <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.4" />
-    <PackageReference Include="Avalonia.Controls.Charts" Version="12.1.1" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
-    <PackageReference Include="Avalonia.Controls.Markdown" Version="12.1.4" />
     <PackageReference Include="FluentAvaloniaUI" Version="3.1.0" />
     <PackageReference Include="Microsoft.Diagnostics.NETCore.Client" Version="0.2.750501" />
     <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.2.8" />
@@ -39,7 +41,16 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
   </ItemGroup>
-  <ItemGroup>
+  <ItemGroup Condition="'$(UseAvaloniaPro)' == 'true'">
+    <PackageReference Include="Avalonia.Controls.Charts" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Controls.Markdown" Version="12.1.4" />
     <AvaloniaUILicenseKey Include="$(AvaloniaUILicenseKey)" Condition="'$(AvaloniaUILicenseKey)' != ''" />
+    <AvaloniaXaml Remove="Controls/Fallback/**/*.axaml" />
+    <AvaloniaXaml Remove="Styles/Fallback/**/*.axaml" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseAvaloniaPro)' != 'true'">
+    <AvaloniaXaml Remove="Controls/MemoryHistoryView.axaml;Controls/PauseHistogramView.axaml;Controls/UpdateAvailableDialog.axaml" />
+    <AvaloniaXaml Remove="Styles/AvaloniaProStyles.axaml" />
+    <AvaloniaXaml Update="Styles/Fallback/AvaloniaProStyles.axaml" Link="Styles/AvaloniaProStyles.axaml" />
   </ItemGroup>
 </Project>
