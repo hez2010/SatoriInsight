@@ -1,4 +1,4 @@
-<h1><img src="docs/images/app-icon.svg" width="36" height="36" align="middle" alt=""> Satori Insight</h1>
+<h1><img src="docs/images/app-icon.svg" width="40" height="40" align="left" alt=""> Satori Insight</h1>
 
 A desktop profiler for exploring local .NET memory and garbage collection.
 
