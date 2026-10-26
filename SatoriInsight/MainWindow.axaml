@@ -243,6 +243,14 @@
                                         <DataGridTextColumn x:DataType="models:GcEvent" Header="Completed" Binding="{Binding TimeLabel}" SortMemberPath="EndSeconds" Width="112" />
                                         <DataGridTextColumn x:DataType="models:GcEvent" Header="Gen" Binding="{Binding GenerationLabel}" SortMemberPath="Generation" Width="65" />
                                         <DataGridTextColumn x:DataType="models:GcEvent" Header="Mode" Binding="{Binding Kind}" Width="140" />
+                                        <DataGridTemplateColumn Header="Latency mode" SortMemberPath="LatencyMode" Width="190">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate x:DataType="models:GcEvent">
+                                                    <TextBlock Text="{Binding LatencyModeLabel}" ToolTip.Tip="{Binding LatencyModeTooltip}" Margin="12,0"
+                                                        VerticalAlignment="Center" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
                                         <DataGridTextColumn x:DataType="models:GcEvent" Header="Reason / outcome" Binding="{Binding Reason}" Width="160" />
                                         <DataGridTemplateColumn Header="Before" SortMemberPath="BeforeBytes" Width="112">
                                             <DataGridTemplateColumn.CellTemplate>
@@ -265,7 +273,7 @@
                         <Border Classes="panel">
                             <StackPanel Spacing="12">
                                 <TextBlock Text="{Binding EventTitle}" FontWeight="SemiBold" FontSize="15" />
-                                <Grid ColumnDefinitions="*,*,*,*,*">
+                                <Grid ColumnDefinitions="*,*,*,*,*,Auto" ColumnSpacing="12">
                                     <StackPanel Spacing="5">
                                         <TextBlock Text="{Binding EventReasonTitle}" Classes="eyebrow" />
                                         <TextBlock Text="{Binding EventReason}" />
@@ -285,6 +293,10 @@
                                     <StackPanel Grid.Column="4" Spacing="5">
                                         <TextBlock Text="MODE" Classes="eyebrow" />
                                         <TextBlock Text="{Binding EventMode}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="5" Spacing="5" ToolTip.Tip="{Binding EventLatencyModeTooltip}">
+                                        <TextBlock Text="LATENCY MODE" Classes="eyebrow" />
+                                        <TextBlock Text="{Binding EventLatencyMode}" />
                                     </StackPanel>
                                 </Grid>
                                 <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="0,14,0,0">

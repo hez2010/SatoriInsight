@@ -7,6 +7,26 @@ public sealed partial class LiveTelemetryBuffer
 {
     private readonly List<GcModeSample> _gcModes = [];
 
+    private GcEvent WithSampledLatencyMode(GcEvent gc)
+    {
+        if (gc.LatencyMode.HasValue)
+        {
+            return gc;
+        }
+
+        for (var index = _gcModes.Count - 1; index >= 0; index--)
+        {
+            var sample = _gcModes[index];
+
+            if (sample.Seconds <= gc.EndSeconds && sample.Collector == GcCollectorKind.Satori && sample.LatencyMode.HasValue)
+            {
+                return gc with { LatencyMode = sample.LatencyMode, LatencyModeIsSampled = true };
+            }
+        }
+
+        return gc;
+    }
+
     public void GcMode(double at, GcCollectorKind? collector = null, GCLatencyMode? latencyMode = null)
     {
         if (!double.IsFinite(at) || at < 0 || collector is null && latencyMode is null)

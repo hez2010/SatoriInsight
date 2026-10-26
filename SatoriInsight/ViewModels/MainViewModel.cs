@@ -283,7 +283,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
                 Notify(
                     nameof(EventTitle), nameof(EventReason), nameof(EventReasonTitle), nameof(EventPause), nameof(EventDuration), nameof(EventMode),
                     nameof(EventSuspend), nameof(EventBefore), nameof(EventAfter), nameof(EventPromoted), nameof(EventMemoryScope), nameof(EventBeforeTooltip),
-                    nameof(EventGenerations), nameof(HasEventGenerations));
+                    nameof(EventGenerations), nameof(HasEventGenerations), nameof(EventLatencyMode), nameof(EventLatencyModeTooltip));
             }
         }
     }
@@ -303,6 +303,10 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
     public string EventSuspend => SelectedEvent?.SuspendLabel ?? "—";
 
     public string EventMode => SelectedEvent?.Kind ?? "—";
+
+    public string EventLatencyMode => SelectedEvent?.LatencyModeLabel ?? "—";
+
+    public string EventLatencyModeTooltip => SelectedEvent?.LatencyModeTooltip ?? "Latency mode for the selected collection.";
 
     public string EventBefore => SelectedEvent?.BeforeLabel ?? "—";
 

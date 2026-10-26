@@ -70,7 +70,7 @@ public sealed partial class LiveTelemetryBuffer
                 _gen2Count++;
             }
 
-            _events.Add(gc);
+            _events.Add(WithSampledLatencyMode(gc));
         }
     }
 
@@ -90,7 +90,7 @@ public sealed partial class LiveTelemetryBuffer
 
             Observe(gc.EndSeconds);
             _gen0Count++;
-            _events.Add(gc);
+            _events.Add(WithSampledLatencyMode(gc));
         }
     }
 

@@ -1,3 +1,4 @@
+using System.Runtime;
 using System.Text.Json.Serialization;
 
 namespace SatoriInsight.Models;
@@ -21,7 +22,8 @@ public sealed record GcMemoryStats(long? HeapBeforeBytes, long? HeapAfterBytes, 
 
 public sealed record GcEvent(
     long Number, double EndSeconds, int Generation, string Kind, string Reason, double DurationMilliseconds, double PauseMilliseconds,
-    double SuspendMilliseconds, ThreadLocalGcInfo? ThreadLocal = null, GcMemoryStats? Memory = null)
+    double SuspendMilliseconds, ThreadLocalGcInfo? ThreadLocal = null, GcMemoryStats? Memory = null,
+    GCLatencyMode? LatencyMode = null, bool LatencyModeIsSampled = false)
 {
     [JsonIgnore]
     public bool IsThreadLocal => ThreadLocal is not null;
@@ -34,6 +36,14 @@ public sealed record GcEvent(
 
     [JsonIgnore]
     public string GenerationLabel => $"Gen{Generation}";
+
+    [JsonIgnore]
+    public string LatencyModeLabel => LatencyMode is { } mode ? (LatencyModeIsSampled ? "≈ " : "") + mode.ToString() : "—";
+
+    [JsonIgnore]
+    public string LatencyModeTooltip => LatencyMode is null ? "Latency mode unavailable for this collection."
+        : LatencyModeIsSampled ? "Last sampled mode before this collection completed. It may have changed between samples."
+        : "Latency mode reported for this collection.";
 
     [JsonIgnore]
     public double? ProcessPauseMilliseconds => IsThreadLocal ? null : PauseMilliseconds;

@@ -374,9 +374,12 @@ public sealed class EventPipeCollector : ILiveTelemetrySession
                         return;
                     }
 
+                    GCLatencyMode? latencyMode = gc.GlobalHeapHistory is { } history && Enum.IsDefined((GCLatencyMode)history.PauseMode)
+                        ? (GCLatencyMode)history.PauseMode : null;
+
                     _buffer.GcEnd(new(
                         gc.Number, (gc.StartRelativeMSec + gc.DurationMSec) / 1000, gc.Generation, gc.Type.ToString(), gc.Reason.ToString(), gc.DurationMSec,
-                        gc.PauseDurationMSec, gc.SuspendDurationMSec, Memory: ReadMemoryStats(gc)));
+                        gc.PauseDurationMSec, gc.SuspendDurationMSec, Memory: ReadMemoryStats(gc), LatencyMode: latencyMode));
                 };
             }));
             var sourceAge = (DateTime.UtcNow - source.SessionStartTime.ToUniversalTime()).TotalSeconds;

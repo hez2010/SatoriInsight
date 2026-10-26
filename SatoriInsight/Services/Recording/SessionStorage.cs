@@ -5,7 +5,7 @@ namespace SatoriInsight.Services.Recording;
 
 public static class SessionStorage
 {
-    public const int CurrentSchemaVersion = 11;
+    public const int CurrentSchemaVersion = 12;
 
     public static string Write(SavedSession session) => JsonSerializer.Serialize(session, ProfilerJsonContext.Default.SavedSession);
 
@@ -69,6 +69,11 @@ public static class SessionStorage
 
         foreach (var gc in session.Collections)
         {
+            if (gc.LatencyMode is { } latencyMode && !Enum.IsDefined(latencyMode) || gc.LatencyModeIsSampled && gc.LatencyMode is null)
+            {
+                throw new InvalidDataException("Invalid collection latency mode.");
+            }
+
             if (gc.Memory is { } memory && (memory.HeapBeforeBytes < 0 || memory.HeapAfterBytes < 0 || memory.PromotedBytes < 0 || memory.Generations is null
                 || memory.Generations.Any(g => g is null
                 || string.IsNullOrEmpty(g.Generation) || g.BeforeBytes < 0 || g.AfterBytes < 0 || g.PromotedBytes < 0)))
