@@ -240,6 +240,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
 
     public string P999Label => !HasPauses ? "—" : $"{GcStatistics.Percentile(Events, 99.9):0.00} ms";
 
+    public string MinPauseLabel => !HasPauses ? "—" : $"{PauseEvents.Min(gc => gc.PauseMilliseconds):0.00} ms";
+
     public string MaxPauseLabel => !HasPauses ? "—" : $"{PauseEvents.Max(gc => gc.PauseMilliseconds):0.00} ms";
 
     public string P50Label => !HasPauses ? "—" : $"{GcStatistics.Percentile(Events, 50):0.00} ms";
@@ -397,7 +399,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
         NotifyProcessMetrics();
         Notify(
             nameof(SessionTime), nameof(SessionSeconds), nameof(WindowStartSeconds), nameof(ChartMaximumSeconds), nameof(ChartStepSeconds), nameof(UsedLabel),
-            nameof(CommittedLabel), nameof(AllocationLabel), nameof(P99Label), nameof(P999Label), nameof(MaxPauseLabel), nameof(P50Label), nameof(P95Label),
+            nameof(CommittedLabel), nameof(AllocationLabel), nameof(P99Label), nameof(P999Label), nameof(MinPauseLabel), nameof(MaxPauseLabel), nameof(P50Label), nameof(P95Label),
             nameof(PausePercentLabel), nameof(GcCountLabel), nameof(PauseCountLabel), nameof(Events), nameof(History), nameof(Histogram),
             nameof(HistogramMaximumCount), nameof(HistogramCountStep), nameof(HasPauses), nameof(P99WithUnitsLabel), nameof(PauseCounters),
             nameof(HasSessionData), nameof(HasCollectedData), nameof(CanPause), nameof(HasHistory), nameof(EmptyHistoryLabel), nameof(EmptyEventsLabel),

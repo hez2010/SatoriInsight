@@ -36,10 +36,16 @@ public sealed record GcEvent(
     public string GenerationLabel => $"Gen{Generation}";
 
     [JsonIgnore]
-    public string PauseLabel => IsThreadLocal ? "—" : $"{PauseMilliseconds:0.00} ms";
+    public double? ProcessPauseMilliseconds => IsThreadLocal ? null : PauseMilliseconds;
 
     [JsonIgnore]
-    public string SuspendLabel => IsThreadLocal ? "—" : $"{SuspendMilliseconds:0.00} ms";
+    public double? ProcessSuspendMilliseconds => IsThreadLocal ? null : SuspendMilliseconds;
+
+    [JsonIgnore]
+    public string PauseLabel => ProcessPauseMilliseconds is { } value ? $"{value:0.00} ms" : "—";
+
+    [JsonIgnore]
+    public string SuspendLabel => ProcessSuspendMilliseconds is { } value ? $"{value:0.00} ms" : "—";
 
     [JsonIgnore]
     public string DurationLabel => IsThreadLocal && DurationMilliseconds < 1 ? $"{DurationMilliseconds * 1000:0.00} µs" : $"{DurationMilliseconds:0.00} ms";
@@ -48,15 +54,19 @@ public sealed record GcEvent(
     public decimal? BeforeBytes => ThreadLocal is { } local ? (decimal)local.OccupancyBefore : Memory?.HeapBeforeBytes;
 
     [JsonIgnore]
+    public decimal? AfterBytes => ThreadLocal is { } local ? (decimal)local.OccupancyAfter : Memory?.HeapAfterBytes;
+
+    [JsonIgnore]
+    public long? PromotedBytes => Memory?.PromotedBytes;
+
+    [JsonIgnore]
     public string BeforeLabel => BeforeBytes is { } bytes ? Format.Bytes((double)bytes) : "—";
 
     [JsonIgnore]
-    public string AfterLabel => ThreadLocal is { } local
-        ? Format.Bytes((double)local.OccupancyAfter)
-        : Memory?.HeapAfterBytes is { } bytes ? Format.Bytes(bytes) : "—";
+    public string AfterLabel => AfterBytes is { } bytes ? Format.Bytes((double)bytes) : "—";
 
     [JsonIgnore]
-    public string PromotedLabel => Memory?.PromotedBytes is { } bytes ? Format.Bytes(bytes) : "—";
+    public string PromotedLabel => PromotedBytes is { } bytes ? Format.Bytes(bytes) : "—";
 
     [JsonIgnore]
     public string MemoryScope => IsThreadLocal ? "Thread occupancy" : "Managed heap";

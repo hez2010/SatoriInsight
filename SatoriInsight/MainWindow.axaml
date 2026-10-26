@@ -231,9 +231,9 @@
                                     SelectedItem="{Binding SelectedEvent}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeColumns="True"
                                     SelectionMode="Single">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="GC #" Binding="{Binding NumberLabel}" Width="80" />
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Completed" Binding="{Binding TimeLabel}" Width="112" />
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Gen" Binding="{Binding GenerationLabel}" Width="65" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="GC #" Binding="{Binding NumberLabel}" SortMemberPath="Number" Width="80" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Completed" Binding="{Binding TimeLabel}" SortMemberPath="EndSeconds" Width="112" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Gen" Binding="{Binding GenerationLabel}" SortMemberPath="Generation" Width="65" />
                                         <DataGridTextColumn x:DataType="models:GcEvent" Header="Mode" Binding="{Binding Kind}" Width="140" />
                                         <DataGridTextColumn x:DataType="models:GcEvent" Header="Reason / outcome" Binding="{Binding Reason}" Width="160" />
                                         <DataGridTemplateColumn Header="Before" SortMemberPath="BeforeBytes" Width="112">
@@ -244,12 +244,12 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="After" Binding="{Binding AfterLabel}" Width="112" />
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="GC pause" Binding="{Binding PauseLabel}" Width="110" />
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="GC duration" Binding="{Binding DurationLabel}" Width="120" />
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Promoted" Binding="{Binding PromotedLabel}" Width="112" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="After" Binding="{Binding AfterLabel}" SortMemberPath="AfterBytes" Width="112" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="GC pause" Binding="{Binding PauseLabel}" SortMemberPath="ProcessPauseMilliseconds" Width="110" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="GC duration" Binding="{Binding DurationLabel}" SortMemberPath="DurationMilliseconds" Width="120" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Promoted" Binding="{Binding PromotedLabel}" SortMemberPath="PromotedBytes" Width="112" />
                                         <DataGridTextColumn x:DataType="models:GcEvent" Header="Memory scope" Binding="{Binding MemoryScope}" Width="140" />
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Suspend latency" Binding="{Binding SuspendLabel}" Width="140" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Suspend latency" Binding="{Binding SuspendLabel}" SortMemberPath="ProcessSuspendMilliseconds" Width="140" />
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </StackPanel>
@@ -303,9 +303,9 @@
                                     AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeColumns="True" MaxHeight="220">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="Generation" Binding="{Binding Generation}" Width="*" />
-                                        <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="Before" Binding="{Binding BeforeLabel}" Width="*" />
-                                        <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="After" Binding="{Binding AfterLabel}" Width="*" />
-                                        <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="Promoted" Binding="{Binding PromotedLabel}" Width="*" />
+                                        <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="Before" Binding="{Binding BeforeLabel}" SortMemberPath="BeforeBytes" Width="*" />
+                                        <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="After" Binding="{Binding AfterLabel}" SortMemberPath="AfterBytes" Width="*" />
+                                        <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="Promoted" Binding="{Binding PromotedLabel}" SortMemberPath="PromotedBytes" Width="*" />
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </StackPanel>

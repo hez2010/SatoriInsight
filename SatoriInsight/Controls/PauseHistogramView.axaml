@@ -44,22 +44,26 @@
         </Grid>
         <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" RowSpacing="8" Margin="0,3,0,0">
             <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="min" Classes="pause-stat-label" />
+                <TextBlock Text="{Binding MinPauseLabel}" Classes="pause-stat-value" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                 <TextBlock Text="p50" Classes="pause-stat-label" />
                 <TextBlock Text="{Binding P50Label}" Classes="pause-stat-value" />
             </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
                 <TextBlock Text="p95" Classes="pause-stat-label" />
                 <TextBlock Text="{Binding P95Label}" Classes="pause-stat-value" />
             </StackPanel>
-            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6">
                 <TextBlock Text="p99" Classes="pause-stat-label" />
                 <TextBlock Text="{Binding P99WithUnitsLabel}" Classes="pause-stat-value" />
             </StackPanel>
-            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6">
+            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="6">
                 <TextBlock Text="p99.9" Classes="pause-stat-label" />
                 <TextBlock Text="{Binding P999Label}" Classes="pause-stat-value" />
             </StackPanel>
-            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="6">
+            <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Spacing="6">
                 <TextBlock Text="max" Classes="pause-stat-label" />
                 <TextBlock Text="{Binding MaxPauseLabel}" Classes="pause-stat-value" />
             </StackPanel>

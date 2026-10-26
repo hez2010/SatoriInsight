@@ -14,7 +14,7 @@ The overview shows heap sizes, allocation rate, generation counts, CPU time, ela
 
 The collection log includes generation, mode, reason or outcome, duration, pause, and before/after sizes where available. Select a row for more detail. Filter by generation, or click a histogram bar to select collections in a pause interval.
 
-The pause histogram and p50, p95, p99, p99.9, and maximum describe process-wide GC pauses. Thread-local collections count toward Gen0 activity but do not contribute to that histogram. Collection duration and suspension latency are separate measurements.
+The pause histogram and minimum, p50, p95, p99, p99.9, and maximum describe process-wide GC pauses. Thread-local collections count toward Gen0 activity but do not contribute to that histogram. Collection duration and suspension latency are separate measurements.
 
 Generation sizes describe the latest reported measurement and can lag current allocation. A missing value is shown as `—`.
 
