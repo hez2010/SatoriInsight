@@ -44,7 +44,7 @@ Choose **Capture heap** or **Open dump** in **Heap inspector**. Capture can brie
 - **Types:** search type names and inspect their objects.
 - **Objects:** select an object and follow references.
 - **Root path:** find a path connecting an object to a captured root. A missing path in a partial capture does not prove the object is unrooted.
-- **Compare:** select a baseline and compare shallow memory usage by type. These values are not retained sizes.
+- **Compare:** choose captures under **Baseline** and **Compare with** to compare shallow memory usage by type. Both captures must contain object data. These values are not retained sizes.
 
 Region-only captures disable the object-related tabs. Keep up to four captures at once; use **Remove capture** to discard those you no longer need.
 

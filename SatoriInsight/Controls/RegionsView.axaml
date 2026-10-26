@@ -76,11 +76,11 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                            <DataGrid IsVisible="{Binding HasObjectCapture}" ItemsSource="{Binding RegionHoles}" Height="150"
+                            <DataGrid Name="RegionHolesGrid" IsVisible="{Binding HasObjectCapture}" ItemsSource="{Binding RegionHoles}" Height="150"
                                 RowHeight="30" IsReadOnly="True" AutoGenerateColumns="False">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn x:DataType="models:FreeHole" Header="Free hole address" Binding="{Binding AddressLabel}" Width="*" />
-                                    <DataGridTextColumn x:DataType="models:FreeHole" Header="Size" Binding="{Binding SizeLabel}" Width="110" />
+                                    <DataGridTextColumn x:DataType="models:FreeHole" Header="Free hole address" Binding="{Binding AddressLabel}" SortMemberPath="Address" Width="*" />
+                                    <DataGridTextColumn x:DataType="models:FreeHole" Header="Size" Binding="{Binding SizeLabel}" SortMemberPath="Size" Width="110" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </StackPanel>
@@ -93,9 +93,9 @@
                                 SelectedItem="{Binding SelectedRegionObject}" DoubleTapped="RegionObject_DoubleTapped" Height="310" RowHeight="30"
                                 IsReadOnly="True" AutoGenerateColumns="False">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Address" Binding="{Binding AddressLabel}" Width="145" />
+                                    <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Address" Binding="{Binding AddressLabel}" SortMemberPath="Address" Width="145" />
                                     <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Type" Binding="{Binding Type}" Width="*" />
-                                    <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Size" Binding="{Binding SizeLabel}" Width="100" />
+                                    <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Size" Binding="{Binding SizeLabel}" SortMemberPath="Size" Width="100" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </StackPanel>

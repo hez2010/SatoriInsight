@@ -15,7 +15,7 @@
         <DataGrid Grid.Row="1" Name="ProcessGrid" ItemsSource="{Binding LocalProcesses}" SelectedItem="{Binding SelectedLocalProcess}"
             IsReadOnly="True" AutoGenerateColumns="False" SelectionMode="Single">
             <DataGrid.Columns>
-                <DataGridTemplateColumn Header="Process" Width="*">
+                <DataGridTemplateColumn Header="Process" SortMemberPath="Name" Width="*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate x:DataType="models:LocalDotNetProcess">
                             <TextBlock Classes="process-name" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="12,0">
@@ -26,8 +26,8 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn x:DataType="models:LocalDotNetProcess" Header="PID" Binding="{Binding ProcessId}" Width="100" />
-                <DataGridTextColumn x:DataType="models:LocalDotNetProcess" Header="Started (local)" Binding="{Binding StartedLabel}" Width="150" />
+                <DataGridTextColumn x:DataType="models:LocalDotNetProcess" Header="PID" Binding="{Binding ProcessId}" SortMemberPath="ProcessId" Width="100" />
+                <DataGridTextColumn x:DataType="models:LocalDotNetProcess" Header="Started (local)" Binding="{Binding StartedLabel}" SortMemberPath="StartTimeUtc" Width="150" />
             </DataGrid.Columns>
         </DataGrid>
         <StackPanel Grid.Row="2" Spacing="8">

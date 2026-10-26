@@ -1,6 +1,11 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:vm="using:SatoriInsight.ViewModels"
     xmlns:models="using:SatoriInsight.Models" xmlns:local="using:SatoriInsight.Controls" x:DataType="vm:MainViewModel"
     x:Class="SatoriInsight.Controls.HeapInspectorView">
+    <UserControl.Styles>
+        <Style Selector="ComboBox.comparison-capture ComboBoxItem" x:DataType="models:HeapProfile">
+            <Setter Property="IsEnabled" Value="{Binding !MetadataOnly}" />
+        </Style>
+    </UserControl.Styles>
     <StackPanel Spacing="14">
         <WrapPanel>
             <Button Content="Capture heap" IsEnabled="{Binding CanCaptureHeap}" Click="Capture_Click" Classes="primary" Margin="0,0,8,8"
@@ -29,12 +34,12 @@
                 <StackPanel Spacing="12" Margin="0,16,0,0">
                     <TextBox Text="{Binding TypeSearch}" PlaceholderText="Filter captured type names" />
                     <Button Content="Inspect selected type's objects" Click="Objects_Click" Classes="secondary" />
-                    <DataGrid ItemsSource="{Binding Types}" SelectedItem="{Binding SelectedType}" Height="480" IsReadOnly="True"
+                    <DataGrid Name="TypesGrid" ItemsSource="{Binding Types}" SelectedItem="{Binding SelectedType}" Height="480" IsReadOnly="True"
                         AutoGenerateColumns="False">
                         <DataGrid.Columns>
                             <DataGridTextColumn x:DataType="models:TypeStat" Header="Type" Binding="{Binding Name}" Width="*" />
-                            <DataGridTextColumn x:DataType="models:TypeStat" Header="Count" Binding="{Binding CountLabel}" Width="160" />
-                            <DataGridTextColumn x:DataType="models:TypeStat" Header="Shallow bytes" Binding="{Binding SizeLabel}" Width="170" />
+                            <DataGridTextColumn x:DataType="models:TypeStat" Header="Count" Binding="{Binding CountLabel}" SortMemberPath="Count" Width="160" />
+                            <DataGridTextColumn x:DataType="models:TypeStat" Header="Shallow bytes" Binding="{Binding SizeLabel}" SortMemberPath="Bytes" Width="170" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </StackPanel>
@@ -46,13 +51,13 @@
                         <Button Content="Find root path" Click="Root_Click" IsEnabled="{Binding !IsHeapBusy}" Classes="primary" />
                     </WrapPanel>
                     <TextBlock Text="{Binding ObjectCountLabel}" Classes="muted" TextWrapping="Wrap" />
-                    <DataGrid ItemsSource="{Binding Objects}" SelectedItem="{Binding SelectedObject}" Height="280" IsReadOnly="True"
+                    <DataGrid Name="ObjectsGrid" ItemsSource="{Binding Objects}" SelectedItem="{Binding SelectedObject}" Height="280" IsReadOnly="True"
                         AutoGenerateColumns="False" SelectionChanged="RevealSelectedObject" Loaded="RevealSelectedObject">
                         <DataGrid.Columns>
-                            <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Address" Binding="{Binding AddressLabel}" Width="180" />
+                            <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Address" Binding="{Binding AddressLabel}" SortMemberPath="Address" Width="180" />
                             <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Type" Binding="{Binding Type}" Width="*" />
-                            <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Size" Binding="{Binding SizeLabel}" Width="140" />
-                            <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Generation" Binding="{Binding GenerationLabel}" Width="140" />
+                            <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Size" Binding="{Binding SizeLabel}" SortMemberPath="Size" Width="140" />
+                            <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Generation" Binding="{Binding GenerationLabel}" SortMemberPath="Generation" Width="140" />
                         </DataGrid.Columns>
                     </DataGrid>
                     <TextBlock Text="{Binding ObjectSummary}" TextWrapping="Wrap" />
@@ -61,7 +66,7 @@
                         IsReadOnly="True" AutoGenerateColumns="False">
                         <DataGrid.Columns>
                             <DataGridTextColumn x:DataType="models:ObjectReference" Header="Reference / field" Binding="{Binding Field}" Width="*" />
-                            <DataGridTextColumn x:DataType="models:ObjectReference" Header="Object address" Binding="{Binding Address, StringFormat=0x{0:X}}" Width="220" />
+                            <DataGridTextColumn x:DataType="models:ObjectReference" Header="Object address" Binding="{Binding Address, StringFormat=0x{0:X}}" SortMemberPath="Address" Width="220" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </StackPanel>
@@ -70,11 +75,11 @@
                 <StackPanel Spacing="12" Margin="0,16,0,0">
                     <TextBlock Text="{Binding ObjectSummary}" TextWrapping="Wrap" />
                     <TextBlock Text="Partial captures may omit root paths." TextWrapping="Wrap" Classes="muted" />
-                    <DataGrid ItemsSource="{Binding RootPath}" Height="440" IsReadOnly="True" AutoGenerateColumns="False">
+                    <DataGrid Name="RootPathGrid" ItemsSource="{Binding RootPath}" Height="440" IsReadOnly="True" AutoGenerateColumns="False">
                         <DataGrid.Columns>
-                            <DataGridTextColumn x:DataType="models:RootPathStep" Header="Depth" Binding="{Binding Depth}" Width="90" />
+                            <DataGridTextColumn x:DataType="models:RootPathStep" Header="Depth" Binding="{Binding Depth}" SortMemberPath="Depth" Width="90" />
                             <DataGridTextColumn x:DataType="models:RootPathStep" Header="Root / reference" Binding="{Binding Link}" Width="260" />
-                            <DataGridTextColumn x:DataType="models:RootPathStep" Header="Address" Binding="{Binding AddressLabel}" Width="180" />
+                            <DataGridTextColumn x:DataType="models:RootPathStep" Header="Address" Binding="{Binding AddressLabel}" SortMemberPath="Address" Width="180" />
                             <DataGridTextColumn x:DataType="models:RootPathStep" Header="Type" Binding="{Binding Type}" Width="*" />
                         </DataGrid.Columns>
                     </DataGrid>
@@ -82,20 +87,41 @@
             </TabItem>
             <TabItem Header="Compare" IsEnabled="{Binding HasObjectCapture}">
                 <StackPanel Spacing="12" Margin="0,16,0,0">
-                    <TextBlock Text="Baseline → selected capture · shallow size" Classes="muted" />
-                    <ComboBox ItemsSource="{Binding Snapshots}" SelectedItem="{Binding BaselineSnapshot}" Width="300" HorizontalAlignment="Left">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate x:DataType="models:HeapProfile">
-                                <TextBlock Text="{Binding Label}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                    <DataGrid ItemsSource="{Binding TypeDifferences}" Height="450" IsReadOnly="True" AutoGenerateColumns="False">
+                    <Grid ColumnDefinitions="320,320" ColumnSpacing="16" HorizontalAlignment="Left">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Baseline" />
+                            <ComboBox Name="BaselineCapturePicker" Classes="comparison-capture" ItemsSource="{Binding Snapshots}"
+                                SelectedItem="{Binding BaselineSnapshot}" HorizontalAlignment="Stretch" PlaceholderText="Select a baseline"
+                                AutomationProperties.Name="Baseline capture">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="models:HeapProfile">
+                                        <TextBlock Text="{Binding Label}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="6">
+                            <TextBlock Text="Compare with" />
+                            <ComboBox Name="ComparisonCapturePicker" Classes="comparison-capture" ItemsSource="{Binding Snapshots}"
+                                SelectedItem="{Binding SelectedSnapshot}" HorizontalAlignment="Stretch" PlaceholderText="Select a capture"
+                                AutomationProperties.Name="Comparison capture">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="models:HeapProfile">
+                                        <TextBlock Text="{Binding Label}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="Shallow size by type" Classes="muted" />
+                    <TextBlock Text="{Binding ComparisonHint}" IsVisible="{Binding !HasComparison}" Classes="muted" TextWrapping="Wrap" />
+                    <DataGrid Name="TypeDifferencesGrid" IsVisible="{Binding HasComparison}" ItemsSource="{Binding TypeDifferences}"
+                        Height="450" IsReadOnly="True" AutoGenerateColumns="False">
                         <DataGrid.Columns>
                             <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Type" Binding="{Binding Name}" Width="*" />
-                            <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Baseline" Binding="{Binding BaselineLabel}" Width="160" />
-                            <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Selected" Binding="{Binding CurrentLabel}" Width="160" />
-                            <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Change" Binding="{Binding DeltaLabel}" Width="160" />
+                            <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Baseline" Binding="{Binding BaselineLabel}" SortMemberPath="BaselineBytes" Width="160" />
+                            <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Selected" Binding="{Binding CurrentLabel}" SortMemberPath="CurrentBytes" Width="160" />
+                            <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Change" Binding="{Binding DeltaLabel}" SortMemberPath="DeltaBytes" Width="160" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </StackPanel>

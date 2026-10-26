@@ -152,7 +152,7 @@ public sealed partial class MainViewModel
         {
             if (Set(ref _baselineSnapshot, value))
             {
-                Notify(nameof(TypeDifferences));
+                Notify(nameof(TypeDifferences), nameof(HasComparison), nameof(ComparisonHint));
             }
         }
     }
@@ -235,9 +235,14 @@ public sealed partial class MainViewModel
 
     public IReadOnlyList<RootPathStep> RootPath => _rootPath;
 
-    public IReadOnlyList<TypeGrowth> TypeDifferences => BaselineSnapshot is { MetadataOnly: false } b && SelectedSnapshot is { MetadataOnly: false } a
-        ? HeapAnalysis.Compare(b, a)
-        : [];
+    public bool HasComparison => BaselineSnapshot is { MetadataOnly: false } baseline && SelectedSnapshot is { MetadataOnly: false } current
+        && baseline.Id != current.Id;
+
+    public string ComparisonHint => Snapshots.Count(snapshot => !snapshot.MetadataOnly) < 2
+        ? "Capture or open two heaps with object data to compare."
+        : "Select different captures for the baseline and comparison.";
+
+    public IReadOnlyList<TypeGrowth> TypeDifferences => HasComparison ? HeapAnalysis.Compare(BaselineSnapshot!, SelectedSnapshot!) : [];
 
     public void FollowReference()
     {
@@ -333,7 +338,7 @@ public sealed partial class MainViewModel
             }
 
             Snapshots.Add(p);
-            BaselineSnapshot ??= p;
+            BaselineSnapshot ??= Snapshots.FirstOrDefault(snapshot => !snapshot.MetadataOnly);
             SelectedSnapshot = p;
             HeapStatus = p.Coverage + (Snapshots.Count == MaxSnapshots ? " Remove a capture before taking another." : "");
         }
@@ -441,9 +446,9 @@ public sealed partial class MainViewModel
 
         Snapshots.Remove(snapshot);
 
-        if (BaselineSnapshot == snapshot)
+        if (BaselineSnapshot is not { MetadataOnly: false } || !Snapshots.Contains(BaselineSnapshot))
         {
-            BaselineSnapshot = Snapshots.FirstOrDefault();
+            BaselineSnapshot = Snapshots.FirstOrDefault(capture => !capture.MetadataOnly);
         }
 
         SelectedSnapshot = Snapshots.LastOrDefault();
@@ -452,7 +457,7 @@ public sealed partial class MainViewModel
 
     private void NotifyHeap() => Notify(
         nameof(IsHeapBusy), nameof(CanCaptureHeap), nameof(CanOpenDump), nameof(CanOpenSession), nameof(CanSelectProcess), nameof(CanAttach),
-        nameof(HasSnapshot), nameof(HasObjectCapture), nameof(HasSessionData), nameof(CaptureSourceLabel));
+        nameof(HasSnapshot), nameof(HasObjectCapture), nameof(HasSessionData), nameof(CaptureSourceLabel), nameof(HasComparison), nameof(ComparisonHint));
 
     public bool IsReplay => _replay is not null;
 
@@ -520,7 +525,7 @@ public sealed partial class MainViewModel
                 Snapshots.Add(snapshot);
             }
 
-            BaselineSnapshot = Snapshots.FirstOrDefault();
+            BaselineSnapshot = Snapshots.FirstOrDefault(snapshot => !snapshot.MetadataOnly);
             SelectedSnapshot = Snapshots.LastOrDefault();
             ClearTimelineState();
             _frame = RecordedFrame();
