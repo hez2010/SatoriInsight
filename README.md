@@ -11,11 +11,18 @@ A desktop profiler for exploring local .NET memory and garbage collection.
 
 Windows x64 is the tested platform, with .NET 8 and .NET 10 targets. Available measurements depend on the target runtime. Remote processes and ordinary .NET Framework applications are not supported.
 
-## Download a CI build
+## Download
 
-Open a successful [NativeAOT workflow run](https://github.com/hez2010/SatoriInsight/actions/workflows/native-aot.yml) and download the artifact for your operating system and architecture. Builds are produced for Windows, macOS, Linux, and Alpine Linux, in x64 and ARM64 variants.
+Download the package for your operating system and architecture from the [latest release](https://github.com/hez2010/SatoriInsight/releases/latest).
 
-Extract the application archive inside the downloaded artifact and keep its companion files together. Windows packages use ZIP; macOS and Linux packages use tar.gz to preserve executable permissions. Each package includes a SHA-256 checksum and excludes debug symbols. CI artifacts are retained for 30 days. macOS builds are not notarized.
+| Platform | x64 | ARM64 |
+| --- | --- | --- |
+| Windows | `SatoriInsight-win-x64.zip` | `SatoriInsight-win-arm64.zip` |
+| macOS | `SatoriInsight-osx-x64.tar.gz` | `SatoriInsight-osx-arm64.tar.gz` |
+| Linux (glibc) | `SatoriInsight-linux-x64.tar.gz` | `SatoriInsight-linux-arm64.tar.gz` |
+| Linux (musl / Alpine) | `SatoriInsight-linux-musl-x64.tar.gz` | `SatoriInsight-linux-musl-arm64.tar.gz` |
+
+Extract the archive and run `SatoriInsight.exe` on Windows or `SatoriInsight` on macOS and Linux. Keep its companion files together. Release packages are NativeAOT builds and do not require an installed .NET runtime for the profiler itself. Matching `.sha256` files are available to verify each download. Debug symbols are excluded, and macOS builds are not notarized.
 
 ## Build and run
 
