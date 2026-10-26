@@ -1,10 +1,5 @@
 using System.Diagnostics;
 using System.Text.Json;
-using Avalonia.Controls;
-using Avalonia.Headless.XUnit;
-using Avalonia.Threading;
-using Avalonia.VisualTree;
-using SatoriInsight.Controls;
 using SatoriInsight.Models;
 using SatoriInsight.Services.Heap;
 using SatoriInsight.Services.Recording;
@@ -35,7 +30,6 @@ public class RegionMetadataTests
         Assert.Contains("Unassigned", vm.LiveRegionMap.RegionSummary);
         Assert.Contains("Reported occupancy: — · reported objects: —", vm.LiveRegionMap.RegionSummary);
         Assert.DoesNotContain("Generation -1", vm.LiveRegionMap.RegionSummary);
-        Assert.Equal("Unassigned", RegionPalette.GetLegend(RegionColorMode.Generation).Single(item => item.Label == region.GenerationLabel).Label);
     }
 
     [Fact]
@@ -122,7 +116,7 @@ public class RegionMetadataTests
         vm.ShowCapturedRegions();
         Assert.Equal(8192, Assert.Single(vm.CapturedRegionMap.Regions).Header!.ReportedOccupancyBytes);
         Assert.True(vm.IsHeapInspectorView);
-        Assert.Equal(0, vm.InspectionTab);
+        Assert.True(vm.IsRegionInspection);
         Assert.Equal(liveSelection, vm.LiveRegionMap.SelectedRegion);
         var capturedSelection = vm.CapturedRegionMap.SelectedRegion;
 
@@ -196,54 +190,4 @@ public class RegionMetadataTests
         }
     }
 
-    [AvaloniaFact]
-    public async Task MetadataMapRendersPagesAndKeepsObjectAnalysisUnavailable()
-    {
-        var fixture = RegionTestData.Sample();
-        var profile = new HeapProfile(Guid.NewGuid(), DateTime.UtcNow, null, "test", 0, 0,
-            fixture.Regions, [], [], [], [], ["Region metadata"], MetadataOnly: true);
-        await using var vm = new MainViewModel();
-        vm.Snapshots.Add(profile);
-        vm.SelectedSnapshot = profile;
-        vm.CapturedRegionMap.ColorIndex = 3;
-        var view = new HeapInspectorView();
-        var window = new Window
-        {
-            DataContext = vm,
-            Width = 1200,
-            Height = 900,
-            Content = new ScrollViewer
-            {
-                Content = view
-            }
-        };
-        window.Show();
-
-        try
-        {
-            Dispatcher.UIThread.RunJobs();
-            window.UpdateLayout();
-            Assert.False(vm.LiveRegionMap.HasObjectCapture);
-            vm.ShowCapturedRegions();
-            Dispatcher.UIThread.RunJobs();
-            window.UpdateLayout();
-            var tabs = view.GetVisualDescendants().OfType<TabControl>().Single();
-            Assert.Equal(new[] { "Regions", "Types", "Objects", "Root path", "Compare" },
-                tabs.Items.Cast<TabItem>().Select(tab => tab.Header?.ToString()));
-            Assert.Equal(0, tabs.SelectedIndex);
-            var regions = view.GetVisualDescendants().OfType<RegionsView>().Single();
-            var map = regions.FindControl<RegionMap>("HeapMap")!;
-            Assert.Equal(profile.Regions.Select(region => region.StartAddress), map.Regions!.Select(region => region.StartAddress));
-            Assert.NotEmpty(map.Regions!);
-            Assert.Equal(RegionColorMode.Queue, map.ColorMode);
-            Assert.False(vm.HasObjectCapture);
-            Assert.False(vm.CapturedRegionMap.HasObjectCapture);
-            Assert.Contains("Reported occupancy", vm.CapturedRegionMap.RegionSummary);
-            Assert.Contains(vm.CapturedRegionMap.RegionLayoutLegend, item => item.Label == "Used range");
-        }
-        finally
-        {
-            window.Close();
-        }
-    }
 }

@@ -209,7 +209,8 @@ public class HeapProfilingTests
         vm.Snapshots.Add(profile);
         vm.SelectedSnapshot = profile;
         Assert.Equal(512, vm.Objects.Count);
-        Assert.Equal(512, vm.CapturedRegionMap.RegionObjects.Count);
+        vm.CapturedRegionMap.SelectedRegion = profile.Regions[0];
+        Assert.Equal(512, vm.CapturedRegionMap.RegionLayoutObjects.Count);
 
         vm.SelectedType = profile.Types[0];
         Assert.Equal(256, vm.Objects.Count);
@@ -217,6 +218,6 @@ public class HeapProfilingTests
         vm.InspectObject(profile.Objects[^1]);
         Assert.Equal(512, vm.Objects.Count);
         Assert.Equal(profile.Objects[^1], vm.SelectedObject);
-        Assert.Equal(2, vm.InspectionTab);
+        Assert.False(vm.IsRegionInspection);
     }
 }

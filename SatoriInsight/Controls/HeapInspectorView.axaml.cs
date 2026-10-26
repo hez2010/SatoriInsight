@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
@@ -18,23 +19,52 @@ public partial class HeapInspectorView : UserControl
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ObjectReference))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(RootPathStep))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(TypeGrowth))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(FreeHole))]
     public HeapInspectorView() => InitializeComponent();
 
     private async void Capture_Click(object? s, RoutedEventArgs e) => await Vm.CaptureHeapAsync();
 
     private void Cancel_Click(object? s, RoutedEventArgs e) => Vm.CancelHeapOperation();
 
-    private void ViewRegions_Click(object? s, RoutedEventArgs e) => Vm.ShowCapturedRegions();
-
     private void Remove_Click(object? s, RoutedEventArgs e) => Vm.RemoveSnapshot();
-
-    private void Objects_Click(object? s, RoutedEventArgs e) => Vm.InspectTypeObjects();
 
     private void AllTypes_Click(object? s, RoutedEventArgs e) => Vm.ShowAllObjects();
 
-    private async void Root_Click(object? s, RoutedEventArgs e) => await Vm.FindRootAsync();
+    private void Region_Focused(object? sender, EventArgs e) => Vm.ShowCapturedRegions();
 
-    private void Follow_Click(object? s, RoutedEventArgs e) => Vm.FollowReference();
+    private void Object_Focused(object? sender, RoutedEventArgs e) => Vm.ShowObjectInspection();
+
+    private void Back_Click(object? sender, RoutedEventArgs e) => Vm.GoBackToObject();
+
+    private void Reference_DoubleTapped(object? sender, TappedEventArgs e) => Vm.FollowReference();
+
+    private void Reference_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            Vm.FollowReference();
+            e.Handled = true;
+        }
+    }
+
+    private void RootPath_DoubleTapped(object? sender, TappedEventArgs e) => InspectPathObject(sender);
+
+    private void RootPath_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            InspectPathObject(sender);
+            e.Handled = true;
+        }
+    }
+
+    private void InspectPathObject(object? sender)
+    {
+        if (sender is DataGrid { SelectedItem: RootPathStep step } && Vm.SelectedSnapshot?.Objects.FirstOrDefault(obj => obj.Address == step.Address) is { } obj)
+        {
+            Vm.InspectObject(obj);
+        }
+    }
 
     private void RevealSelectedObject(object? sender, RoutedEventArgs e)
     {

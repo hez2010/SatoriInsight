@@ -555,6 +555,7 @@ public sealed partial class MainViewModel
 
         _disposed = true;
         _lifetime.Cancel();
+        await _rootSearchTask;
 
         if (_heapTask is { } heapTask)
         {

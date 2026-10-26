@@ -17,7 +17,6 @@ public sealed partial class MainViewModel
     private RootPathStep[] _rootPath = [];
     private string _heapStatus = "";
     private string _typeSearch = "";
-    private int _inspectionTab;
     private SavedSession? _replay;
     private double _replayPosition;
     private Task? _heapTask;
@@ -103,12 +102,6 @@ public sealed partial class MainViewModel
         ? $"Captured {capture.CapturedUtc.ToLocalTime():yyyy-MM-dd HH:mm:ss} · {capture.Process?.DisplayLabel ?? "Dump"}"
         : "Capture a heap or open a dump to inspect objects.";
 
-    public int InspectionTab
-    {
-        get => _inspectionTab;
-        set => Set(ref _inspectionTab, value);
-    }
-
     public HeapProfile? SelectedSnapshot
     {
         get => _selectedSnapshot;
@@ -116,20 +109,17 @@ public sealed partial class MainViewModel
         {
             if (Set(ref _selectedSnapshot, value))
             {
+                _objectRegion = null;
+                _objectHistory.Clear();
                 CapturedRegionMap.SetSnapshot(value);
                 HeapStatus = value?.Coverage ?? "";
-                _objectRegion = null;
 
                 SelectedType = null;
                 SelectedObject = null;
                 Notify(nameof(Types), nameof(TypeDifferences));
                 NotifyObjects();
+                IsRegionInspection = !HasObjectCapture;
                 NotifyHeap();
-
-                if (HasSnapshot && (InspectionTab < 0 || !HasObjectCapture))
-                {
-                    InspectionTab = 0;
-                }
             }
         }
     }
@@ -141,8 +131,8 @@ public sealed partial class MainViewModel
             return;
         }
 
-        InspectionTab = 0;
         NavigationIndex = 1;
+        IsRegionInspection = true;
     }
 
     public HeapProfile? BaselineSnapshot
@@ -164,12 +154,16 @@ public sealed partial class MainViewModel
         {
             if (Set(ref _typeSearch, value))
             {
-                Notify(nameof(Types));
+                Notify(nameof(Types), nameof(HasHeapFilter));
             }
         }
     }
 
-    public IReadOnlyList<TypeStat> Types => SelectedSnapshot?.Types.Where(t => t.Name.Contains(TypeSearch, StringComparison.OrdinalIgnoreCase)).ToArray() ?? [];
+    private IReadOnlyList<TypeStat> ScopedTypes => _objectRegion is { } region
+        ? SelectedSnapshot?.Regions.FirstOrDefault(item => item.Id == region)?.Types ?? []
+        : SelectedSnapshot?.Types ?? [];
+
+    public IReadOnlyList<TypeStat> Types => ScopedTypes.Where(type => type.Name.Contains(TypeSearch, StringComparison.OrdinalIgnoreCase)).ToArray();
 
     public TypeStat? SelectedType
     {
@@ -178,8 +172,9 @@ public sealed partial class MainViewModel
         {
             if (Set(ref _selectedType, value))
             {
-                SelectedObject = null;
+                _objectHistory.Clear();
                 NotifyObjects();
+                ShowObjectInspection();
             }
         }
     }
@@ -201,7 +196,9 @@ public sealed partial class MainViewModel
             {
                 _rootPath = [];
                 SelectedReference = null;
-                Notify(nameof(ObjectSummary), nameof(ObjectReferences), nameof(RootPath));
+                StartRootSearch();
+                ShowObjectInspection();
+                Notify(nameof(ObjectSummary), nameof(ObjectReferences), nameof(RootPath), nameof(HasSelectedObject));
             }
         }
     }
@@ -248,7 +245,14 @@ public sealed partial class MainViewModel
     {
         if (SelectedSnapshot?.Objects.FirstOrDefault(o => o.Address == SelectedReference?.Address) is { } obj)
         {
+            var previous = SelectedObject;
             InspectObject(obj);
+
+            if (previous is not null && previous.Address != obj.Address)
+            {
+                _objectHistory.Push(previous);
+                Notify(nameof(CanGoBackToObject));
+            }
         }
         else
         {
@@ -258,50 +262,27 @@ public sealed partial class MainViewModel
 
     public void InspectObject(HeapObjectInfo obj)
     {
-        _objectRegion = null;
-        SelectedType = null;
-        NotifyObjects();
+        if (!_objects.Contains(obj))
+        {
+            CapturedRegionMap.SelectedRegion = null;
+            _objectRegion = null;
+            SelectedType = null;
+            NotifyObjects();
+        }
+
         SelectedObject = obj;
-        InspectionTab = 2;
-    }
-
-    public void InspectRegionObject(HeapObjectInfo obj)
-    {
-        if (!CapturedRegionMap.HasObjectCapture)
-        {
-            return;
-        }
-
-        InspectObject(obj);
+        ShowObjectInspection();
         NavigationIndex = 1;
-    }
-
-    public void InspectRegionObjects()
-    {
-        if (!CapturedRegionMap.HasObjectCapture || CapturedRegionMap.SelectedRegion is not { } region)
-        {
-            return;
-        }
-
-        SelectedType = null;
-        _objectRegion = region.Id;
-        InspectionTab = 2;
-        NavigationIndex = 1;
-        NotifyObjects();
-    }
-
-    public void InspectTypeObjects()
-    {
-        _objectRegion = null;
-        InspectionTab = 2;
-        NotifyObjects();
     }
 
     public void ShowAllObjects()
     {
+        CapturedRegionMap.SelectedRegion = null;
         _objectRegion = null;
+        TypeSearch = "";
         SelectedType = null;
         NotifyObjects();
+        ShowObjectInspection();
     }
 
     public Task CaptureHeapAsync(string? dumpPath = null)
@@ -361,59 +342,6 @@ public sealed partial class MainViewModel
 
     public void CancelHeapOperation() => _heapCancellation?.Cancel();
 
-    public Task FindRootAsync()
-    {
-        if (IsHeapBusy || _disposed || _sessionLoading)
-        {
-            return Task.CompletedTask;
-        }
-
-        return _heapTask = FindRootCoreAsync();
-    }
-
-    private async Task FindRootCoreAsync()
-    {
-        if (IsHeapBusy || SelectedSnapshot is not { } profile || SelectedObject is not { } obj)
-        {
-            return;
-        }
-
-        _heapBusy = true;
-        _heapCancellation = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
-        NotifyHeap();
-        HeapStatus = "Finding a root path…";
-        InspectionTab = 3;
-
-        try
-        {
-            var path = await Task.Run(() => HeapAnalysis.FindRootPath(profile, obj.Address, _heapCancellation.Token));
-
-            if (SelectedSnapshot != profile || SelectedObject != obj)
-            {
-                return;
-            }
-
-            _rootPath = path;
-            HeapStatus = path.Length > 0 ? $"Root path found: {path.Length} objects." : "No root path found in this capture.";
-            Notify(nameof(RootPath));
-        }
-        catch (OperationCanceledException)
-        {
-            HeapStatus = "Root search canceled.";
-        }
-        catch (Exception ex)
-        {
-            HeapStatus = $"Root search failed: {ex.Message}";
-        }
-        finally
-        {
-            _heapBusy = false;
-            _heapCancellation.Dispose();
-            _heapCancellation = null;
-            NotifyHeap();
-        }
-    }
-
     private void NotifyObjects()
     {
         var selected = SelectedObject;
@@ -433,8 +361,10 @@ public sealed partial class MainViewModel
         }
         else
         {
-            SelectedObject = null;
+            SelectedObject = _objects.FirstOrDefault();
         }
+
+        Notify(nameof(HasHeapFilter), nameof(CanGoBackToObject));
     }
 
     public void RemoveSnapshot()

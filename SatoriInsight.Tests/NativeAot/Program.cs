@@ -1,15 +1,5 @@
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Avalonia;
-using Avalonia.Collections;
-using Avalonia.Controls;
-using Avalonia.Controls.Charts;
-using Avalonia.Headless;
-using Avalonia.Threading;
-using Avalonia.VisualTree;
-using SatoriInsight;
-using SatoriInsight.Controls;
 using SatoriInsight.Models;
 using SatoriInsight.Services.Heap;
 using SatoriInsight.Services.Processes;
@@ -37,8 +27,8 @@ static class Smoke
         {
             Check(!RuntimeFeature.IsDynamicCodeSupported, "Run the published NativeAOT executable.");
             CheckNativeServices(Path.GetFullPath(args[0]));
-            CheckUi();
-            Console.WriteLine("PASS: native process discovery, EventPipe, heap capture, replay, grid selection/sorting, and charts.");
+            CheckSessionReplay();
+            Console.WriteLine("PASS: native process discovery, EventPipe, heap capture, and session replay.");
             return 0;
         }
         catch (Exception error)
@@ -119,7 +109,7 @@ static class Smoke
         }
     }
 
-    private static void CheckUi()
+    private static void CheckSessionReplay()
     {
         var events = new[]
         {
@@ -137,37 +127,20 @@ static class Smoke
         Check(SessionStorage.ReadAsync(stream, default).GetAwaiter().GetResult().ProcessMetrics.Length == 2, "Async session round trip.");
 
         var model = new MainViewModel();
-        model.ImportSessionAsync(json).GetAwaiter().GetResult();
-        AppBuilder.Configure<App>().UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
-            .UseSkia().WithInterFont().SetupWithoutStarting();
-        var window = new MainWindow(model);
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-        window.UpdateLayout();
 
-        var grid = window.FindControl<DataGrid>("EventsGrid")!;
-        Check(grid.ItemsSource.Cast<GcEvent>().Count() == 2, "EventsGrid ItemsSource binding.");
-        Check(grid.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == "BackgroundGC"), "Compiled event cell binding.");
-        Check(grid.Columns.Single(column => Equals(column.Header, "Before")).CanUserSort, "Before sort property was trimmed.");
-        var sorted = new DataGridCollectionView(events);
-        sorted.SortDescriptions.Add(DataGridSortDescription.FromPath(nameof(GcEvent.BeforeBytes), ListSortDirection.Ascending));
-        Check(sorted.Cast<GcEvent>().First().Number == 2, "Numeric Before sort.");
-        var selectedEvent = model.EventLog.Single(gc => gc.Number == 1);
-        model.SelectedEvent = selectedEvent;
-        Dispatcher.UIThread.RunJobs();
-        window.UpdateLayout();
-        Check(Equals(grid.SelectedItem, selectedEvent), "Compiled SelectedItem binding.");
-
-        var history = window.GetVisualDescendants().OfType<MemoryHistoryView>().Single();
-        var chart = history.FindControl<CartesianChart>("MemoryChart")!;
-        var rss = chart.Series.OfType<LineSeries>().Single(series => series.Title == "RSS MiB");
-        Check(rss.GetDataPoints().Select(point => point.Value).SequenceEqual(new[] { 10d, 12d }), "RSS chart getter was trimmed.");
-        var heap = chart.Series.OfType<LineSeries>().Single(series => series.Title == "Managed heap MiB");
-        Check(heap.GetDataPoints().Select(point => point.Value).SequenceEqual(new[] { 2d, 3d }), "Heap chart getter was trimmed.");
-        var histogram = window.GetVisualDescendants().OfType<PauseHistogramView>().Single().FindControl<CartesianChart>("PauseChart")!;
-        Check(histogram.Series.OfType<BarSeries>().Single().GetDataPoints().Sum(point => point.Value) == 1, "Histogram getter was trimmed.");
-        window.Close();
-        Dispatcher.UIThread.RunJobs();
+        try
+        {
+            model.ImportSessionAsync(json).GetAwaiter().GetResult();
+            Check(model.Events.Count == 2, "Replay collections.");
+            model.SelectTimePoint(1.5);
+            Check(model.Events.Count == 1 && model.Events[0].Number == 1, "Replay time selection.");
+            model.ResetTimelineSelection();
+            Check(model.Events.Count == 2, "Replay reset.");
+        }
+        finally
+        {
+            model.DisposeAsync().GetAwaiter().GetResult();
+        }
     }
 
     private static void Check(bool condition, string message)

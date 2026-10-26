@@ -11,7 +11,6 @@ public sealed class RegionMapViewModel : INotifyPropertyChanged
     private HeapProfile? _snapshot;
     private IReadOnlyList<HeapRegion> _regions = [];
     private HeapRegion? _selectedRegion;
-    private HeapObjectInfo? _selectedRegionObject;
     private HeapObjectInfo[] _regionObjects = [];
     private FreeHole[] _regionHoles = [];
     private int _colorIndex;
@@ -19,8 +18,6 @@ public sealed class RegionMapViewModel : INotifyPropertyChanged
     private string _sourceLabel = "0 regions";
 
     public event PropertyChangedEventHandler? PropertyChanged;
-    public event Action<HeapObjectInfo>? ObjectRequested;
-    public event Action? RegionObjectsRequested;
 
     public string[] ColorOptions { get; } = Enum.GetNames<RegionColorMode>();
 
@@ -99,8 +96,10 @@ public sealed class RegionMapViewModel : INotifyPropertyChanged
     private void SetRegions(IReadOnlyList<HeapRegion> regions, bool resetSelection)
     {
         _regions = regions;
-        var selected = resetSelection ? null : regions.FirstOrDefault(region => region.Id == SelectedRegion?.Id);
-        var changed = Set(ref _selectedRegion, selected ?? regions.FirstOrDefault(), nameof(SelectedRegion));
+        var selected = resetSelection
+            ? _snapshot is { MetadataOnly: true } ? regions.FirstOrDefault() : null
+            : regions.FirstOrDefault(region => region.Id == SelectedRegion?.Id) ?? regions.FirstOrDefault();
+        var changed = Set(ref _selectedRegion, selected, nameof(SelectedRegion));
 
         if (changed || resetSelection)
         {
@@ -112,11 +111,9 @@ public sealed class RegionMapViewModel : INotifyPropertyChanged
 
     private void UpdateRegionDetails()
     {
-        var selectedObject = SelectedRegionObject;
         _regionObjects = _snapshot?.Objects.Where(obj => obj.RegionId == SelectedRegion?.Id).OrderBy(obj => obj.Address).ToArray() ?? [];
         _regionHoles = _snapshot?.Holes.Where(hole => hole.RegionId == SelectedRegion?.Id).OrderByDescending(hole => hole.Size).ToArray() ?? [];
-        SelectedRegionObject = _regionObjects.FirstOrDefault(obj => obj.Address == selectedObject?.Address);
-        Notify(nameof(RegionSummary), nameof(RegionHoles), nameof(RegionObjects), nameof(RegionLayoutObjects), nameof(RegionObjectsLabel), nameof(RegionLayoutLegend));
+        Notify(nameof(RegionSummary), nameof(RegionHoles), nameof(RegionLayoutObjects), nameof(RegionLayoutLegend));
     }
 
     public string RegionSummary
@@ -172,33 +169,7 @@ public sealed class RegionMapViewModel : INotifyPropertyChanged
 
     public IReadOnlyList<HeapObjectInfo> RegionLayoutObjects => _regionObjects;
 
-    public IReadOnlyList<HeapObjectInfo> RegionObjects => _regionObjects;
-
-    public HeapObjectInfo? SelectedRegionObject
-    {
-        get => _selectedRegionObject;
-        set => Set(ref _selectedRegionObject, value);
-    }
-
-    public string RegionObjectsLabel => $"{_regionObjects.Length:N0} objects";
-
     public IReadOnlyList<RegionLayoutLegendItem> RegionLayoutLegend => RegionLayoutPalette.GetLegend(SelectedRegion, HasObjectCapture);
-
-    public void InspectRegionObject(HeapObjectInfo obj)
-    {
-        if (HasObjectCapture)
-        {
-            ObjectRequested?.Invoke(obj);
-        }
-    }
-
-    public void InspectRegionObjects()
-    {
-        if (HasObjectCapture && SelectedRegion is not null)
-        {
-            RegionObjectsRequested?.Invoke();
-        }
-    }
 
     private bool Set<T>(ref T field, T value, [CallerMemberName] string? name = null)
     {

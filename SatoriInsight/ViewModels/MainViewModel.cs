@@ -51,8 +51,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
         _processLauncher = processLauncher ?? new LocalProcessLauncher(_sessionFactory);
         TogglePauseCommand = new ActionCommand(_ => IsPaused = !IsPaused);
         ClearPauseFilterCommand = new ActionCommand(_ => SelectedPauseBin = null);
-        CapturedRegionMap.ObjectRequested += InspectRegionObject;
-        CapturedRegionMap.RegionObjectsRequested += InspectRegionObjects;
+        CapturedRegionMap.PropertyChanged += CapturedRegionMap_PropertyChanged;
     }
 
     public int NavigationIndex

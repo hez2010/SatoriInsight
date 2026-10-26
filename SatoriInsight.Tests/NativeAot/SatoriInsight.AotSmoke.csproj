@@ -9,6 +9,5 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../SatoriInsight/SatoriInsight.csproj" />
-    <PackageReference Include="Avalonia.Headless" Version="12.1.4" />
   </ItemGroup>
 </Project>

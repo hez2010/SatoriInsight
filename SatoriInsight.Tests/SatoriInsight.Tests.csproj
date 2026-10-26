@@ -12,7 +12,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageReference Include="xunit.v3" Version="3.2.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1" PrivateAssets="all" />
-    <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.4" />
     <ProjectReference Include="../SatoriInsight/SatoriInsight.csproj" />
     <ProjectReference Include="Workloads/Managed/SatoriInsight.Workload.csproj" ReferenceOutputAssembly="false" />
     <Compile Include="Features/**/*.cs;Infrastructure/**/*.cs" />

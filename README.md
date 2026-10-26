@@ -33,6 +33,10 @@ Download the package for your operating system and architecture from the [latest
 
 ![GC pause statistics and timeline above the collection log, with latency modes and before-and-after memory details](docs/images/gc-analysis.png)
 
+**Heap inspector**
+
+![Captured regions, types, and objects alongside the selected object's references and root path](docs/images/heap-inspector.png)
+
 **Captured regions and fragmentation**
 
 ![Captured heap regions with a selected region's object layout, free space, and objects](docs/images/heap-regions.png)

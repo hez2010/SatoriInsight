@@ -1,0 +1,45 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:vm="using:SatoriInsight.ViewModels"
+    xmlns:local="using:SatoriInsight.Controls" x:DataType="vm:RegionMapViewModel" x:Class="SatoriInsight.Controls.CapturedRegionPicker">
+    <Border Classes="panel" Padding="12" ClipToBounds="True">
+        <Grid RowDefinitions="Auto,36,120" RowSpacing="8">
+            <Grid ColumnDefinitions="*,120,70" ColumnSpacing="8">
+                <TextBlock Text="{Binding MapSourceLabel}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding ColorOptions}" SelectedIndex="{Binding ColorIndex}" ToolTip.Tip="Region color" />
+                <Slider Grid.Column="2" Name="CellSlider" Minimum="4" Maximum="36" Value="{Binding CellSize}" VerticalAlignment="Center"
+                    ToolTip.Tip="Region tile size" />
+            </Grid>
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <StackPanel IsVisible="{Binding HasColorGradient}" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <TextBlock Text="0%" Classes="muted" FontSize="10" />
+                    <Border Width="140" Height="10" Background="{Binding ColorGradient}" VerticalAlignment="Center" />
+                    <TextBlock Text="100%" Classes="muted" FontSize="10" />
+                </StackPanel>
+                <ScrollViewer IsVisible="{Binding !HasColorGradient}" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding ColorLegend}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:RegionLegendItem">
+                                <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,8,2" ToolTip.Tip="{Binding Description}">
+                                    <Border Width="8" Height="8" Background="{Binding Brush}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Label}" Foreground="{Binding TextBrush}" FontSize="10" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                <StackPanel Grid.Column="1" Name="PinnedLegend" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center" ToolTip.Tip="Pinned objects">
+                    <Ellipse Width="9" Height="9" Fill="{x:Static local:RegionPalette.PinnedBrush}" Stroke="#0C111A" StrokeThickness="1.5"
+                        VerticalAlignment="Center" />
+                    <TextBlock Text="Pinned" FontSize="10" VerticalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+            <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <local:RegionMap Name="HeapMap" Regions="{Binding Regions}" SelectedRegion="{Binding SelectedRegion}" ColorMode="{Binding ColorMode}"
+                    CellSize="{Binding CellSize}" PointerReleased="Region_Focused" GotFocus="Region_Focused"
+                    ToolTip.Tip="Select a region to filter its types and objects. Cell size does not represent memory size." />
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

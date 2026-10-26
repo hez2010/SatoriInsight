@@ -101,9 +101,10 @@
     <Style Selector="DataGrid">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FocusAdorner" Value="{x:Null}" />
         <Setter Property="GridLinesVisibility" Value="Horizontal" />
         <Setter Property="HorizontalGridLinesBrush" Value="#252E3D" />
-        <Setter Property="RowHeight" Value="44" />
+        <Setter Property="RowHeight" Value="30" />
         <Setter Property="ColumnHeaderHeight" Value="35" />
         <Setter Property="FontSize" Value="12" />
     </Style>
@@ -126,7 +127,25 @@
         <Setter Property="Margin" Value="4,0,0,0" />
     </Style>
     <Style Selector="DataGridCell">
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="Padding" Value="0" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="FocusAdorner" Value="{x:Null}" />
+    </Style>
+    <Style Selector="DataGridCell:focus /template/ Grid#FocusVisual">
+        <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <Style Selector="DataGridCell:current /template/ Rectangle#CurrencyVisual">
+        <Setter Property="IsVisible" Value="False" />
+        <Setter Property="Height" Value="1" />
+        <Setter Property="VerticalAlignment" Value="Bottom" />
+        <Setter Property="Margin" Value="8,0,8,2" />
+        <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
+        <Setter Property="StrokeThickness" Value="0" />
+    </Style>
+    <Style Selector="DataGrid:focus-visible DataGridCell:current /template/ Rectangle#CurrencyVisual,
+        DataGridCell:current:focus-visible /template/ Rectangle#CurrencyVisual">
+        <Setter Property="IsVisible" Value="True" />
     </Style>
     <Style Selector="ProgressBar">
         <Setter Property="Height" Value="5" />

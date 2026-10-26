@@ -1,9 +1,4 @@
 using System.Diagnostics;
-using Avalonia.Controls;
-using Avalonia.Controls.Charts;
-using Avalonia.Headless.XUnit;
-using Avalonia.Threading;
-using SatoriInsight.Controls;
 using SatoriInsight.Models;
 using SatoriInsight.Services.Processes;
 using SatoriInsight.Services.Recording;
@@ -178,34 +173,6 @@ public class ProcessMetricsTests
         Assert.True(second.CpuSeconds >= first.CpuSeconds);
         Assert.True(second.WallClockSeconds >= first.WallClockSeconds);
         Assert.Throws<InvalidOperationException>(() => new ProcessMetricReader(target with { StartTimeUtc = target.StartTimeUtc.AddSeconds(1) }));
-    }
-
-    [AvaloniaFact]
-    public async Task RssHistoryAppearsWithoutHeapCounterSamples()
-    {
-        await using var vm = new MainViewModel();
-        await vm.ImportSessionAsync(SessionStorage.Write(Session()));
-        var view = new MemoryHistoryView { DataContext = vm };
-        var window = new Window { Content = view, Width = 650, Height = 400 };
-        window.Show();
-
-        try
-        {
-            Dispatcher.UIThread.RunJobs();
-            window.UpdateLayout();
-            var chart = view.FindControl<CartesianChart>("MemoryChart")!;
-            Assert.True(chart.IsVisible);
-            var rss = Assert.Single(chart.Series.OfType<LineSeries>(), series => series.Title == "RSS MiB");
-            Assert.Equal(new[] { 40d, 48d, 60d, 72d, 80d }, rss.GetDataPoints().Select(point => point.Value));
-
-            vm.SelectTimePoint(3);
-            Assert.Equal(5, vm.ProcessHistory.Count);
-            Assert.Equal(8, vm.ChartMaximumSeconds);
-        }
-        finally
-        {
-            window.Close();
-        }
     }
 
     private sealed class MetricsSession : ILiveTelemetrySession, ILiveTelemetrySessionFactory

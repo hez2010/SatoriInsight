@@ -34,19 +34,19 @@ White dots mark regions containing pinned objects.
 
 Each cell represents an observed address range. Select a cell to inspect its address, size, and layout. Cell area is not proportional to memory size; the detail strip is. A reported used range is not a count of live-object bytes.
 
-Use **Memory activity** for live or replayed regions and **Heap inspector → Regions** for a captured map.
+Use **Memory activity** for live or replayed regions and the region map in **Heap inspector** for a capture.
 
 ## Inspect and compare captures
 
 Choose **Capture heap** or **Open dump** in **Heap inspector**. Capture can briefly pause an application. Check the coverage message for partial results.
 
-- **Regions:** explore the captured map and fragmentation.
-- **Types:** search type names and inspect their objects.
-- **Objects:** select an object and follow references.
-- **Root path:** find a path connecting an object to a captured root. A missing path in a partial capture does not prove the object is unrooted.
-- **Compare:** choose captures under **Baseline** and **Compare with** to compare shallow memory usage by type. Both captures must contain object data. These values are not retained sizes.
+Select a region to filter its types and objects and see its layout and free space. Select a type to filter the object list. **Clear filters** returns to all captured objects.
 
-Region-only captures disable the object-related tabs. Keep up to four captures at once; use **Remove capture** to discard those you no longer need.
+Selecting an object displays its details, references, and root path alongside the lists. Double-click a reference or root-path entry, or press Enter, to inspect that object. **Back** returns from a followed reference. A missing root path in a partial capture does not prove the object is unrooted.
+
+Expand **Compare captures** and choose **Baseline** and **Compare with** to compare shallow memory usage by type. Both captures must contain object data. These values are not retained sizes.
+
+Region-only captures show the map and region details. Keep up to four captures at once; use **Remove capture** to discard those you no longer need.
 
 ## Save and replay
 

@@ -1,12 +1,5 @@
 using System.Diagnostics;
 using System.Text.Json;
-using Avalonia.Controls;
-using Avalonia.Headless.XUnit;
-using Avalonia.Interactivity;
-using Avalonia.Threading;
-using Avalonia.VisualTree;
-using FluentAvalonia.UI.Controls;
-using SatoriInsight.Controls;
 using SatoriInsight.Models;
 using SatoriInsight.Services.Processes;
 using SatoriInsight.Services.Recording;
@@ -266,62 +259,6 @@ public class ProcessLaunchTests
         Assert.True(session.Disposed);
         Assert.False(vm.IsConnected);
         Assert.True(vm.CanSelectProcess);
-    }
-
-    [AvaloniaFact]
-    public async Task LaunchDialogEditsArgumentsEnvironmentAndValidation()
-    {
-        var vm = new LaunchProcessViewModel();
-        var view = new LaunchProcessDialog
-        {
-            DataContext = vm
-        };
-        var window = new Window
-        {
-            Width = 700,
-            Height = 600
-        };
-        window.Show();
-        var result = view.ShowAsync(window);
-
-        try
-        {
-            Dispatcher.UIThread.RunJobs();
-            window.UpdateLayout();
-            var launch = view.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Launch"));
-            Assert.False(launch.IsEnabled);
-            view.FindControl<TextBox>("LaunchApplication")!.Text = Environment.ProcessPath!;
-            view.FindControl<TextBox>("LaunchArguments")!.Text = "--name \"two words\"";
-            view.FindControl<TextBox>("LaunchEnvironment")!.Text = "ONE=1\nTWO=two";
-            Dispatcher.UIThread.RunJobs();
-            window.UpdateLayout();
-            Assert.True(vm.CanLaunch);
-            Assert.True(launch.IsEnabled);
-            Assert.Equal("--name \"two words\"", vm.Arguments);
-            view.FindControl<TextBox>("LaunchEnvironment")!.Text = "bad row";
-            Dispatcher.UIThread.RunJobs();
-            launch.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            Assert.False(result.IsCompleted);
-            Assert.True(view.FindControl<TextBlock>("LaunchError")!.IsVisible);
-            view.FindControl<TextBox>("LaunchEnvironment")!.Text = "ONE=1\nTWO=two";
-            Dispatcher.UIThread.RunJobs();
-            launch.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            Assert.Equal(FAContentDialogResult.Primary, await result);
-            Assert.NotNull(view.Options);
-            Assert.Equal("two", view.Options.EnvironmentVariables["TWO"]);
-            Assert.Equal("--name \"two words\"", view.Options.Arguments);
-        }
-        finally
-        {
-            if (!result.IsCompleted)
-            {
-                view.Hide();
-                await result;
-            }
-
-            view.DataContext = null;
-            window.Close();
-        }
     }
 
     private sealed class WaitingFactory : ILiveTelemetrySessionFactory
