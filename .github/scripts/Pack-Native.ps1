@@ -31,7 +31,8 @@ $tar = $IsWindows ? (Join-Path $env:WINDIR 'System32/tar.exe') : 'tar'
 $format = $windowsTarget ? '-a' : '-z'
 
 # Archive Unix binaries with their executable bits, excluding symbols on every platform.
-& $tar $format -cf $archive '--exclude=*.[pP][dD][bB]' '--exclude=*.dbg' '--exclude=*.debug' '--exclude=*.dSYM' -C $publishDirectory .
+$rootEntries = @(Get-ChildItem -LiteralPath $publishDirectory -Force | Select-Object -ExpandProperty Name)
+& $tar $format -cf $archive '--exclude=*.[pP][dD][bB]' '--exclude=*.dbg' '--exclude=*.debug' '--exclude=*.dSYM' -C $publishDirectory -- @rootEntries
 
 if ($LASTEXITCODE -ne 0)
 {
@@ -43,6 +44,11 @@ $entries = & $tar -tf $archive
 if ($LASTEXITCODE -ne 0 -or ($entries | Where-Object { $_ -match '(?i)\.(pdb|dbg|debug)(/|$)|\.dSYM(/|$)' }))
 {
     throw 'The application archive could not be verified or contains debug symbols.'
+}
+
+if ($entries | Where-Object { $_ -match '(^|/)\.(?:/|$)' })
+{
+    throw 'The application archive contains a dot directory.'
 }
 
 $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()

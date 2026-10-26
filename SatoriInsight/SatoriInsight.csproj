@@ -14,6 +14,7 @@
     <!-- .NET 11 RC2 optimized publish skips Avalonia's resource build: AvaloniaUI/Avalonia#22465. -->
     <UseOptimizedPublish>false</UseOptimizedPublish>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/SatoriInsight.ico</ApplicationIcon>
     <Title>Satori Insight</Title>
     <Product>Satori Insight</Product>
     <Version>1.0.3</Version>
