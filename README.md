@@ -11,6 +11,12 @@ A desktop profiler for exploring local .NET memory and garbage collection.
 
 Windows x64 is the tested platform, with .NET 8 and .NET 10 targets. Available measurements depend on the target runtime. Remote processes and ordinary .NET Framework applications are not supported.
 
+## Download a CI build
+
+Open a successful [NativeAOT workflow run](https://github.com/hez2010/SatoriInsight/actions/workflows/native-aot.yml) and download the artifact for your operating system and architecture. Builds are produced for Windows, macOS, Linux, and Alpine Linux, in x64 and ARM64 variants.
+
+Extract the application archive inside the downloaded artifact and keep its companion files together. Windows packages use ZIP; macOS and Linux packages use tar.gz to preserve executable permissions. Each package includes a SHA-256 checksum and excludes debug symbols. CI artifacts are retained for 30 days. macOS builds are not notarized.
+
 ## Build and run
 
 Install the .NET 10 SDK. Building requires an Avalonia Pro Charts license supplied through the `AvaloniaUILicenseKey` environment variable.

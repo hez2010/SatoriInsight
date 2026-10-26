@@ -1,0 +1,143 @@
+name: NativeAOT
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-aot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.rid }}
+    # Fork PRs do not receive the commercial control license.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: win-x64
+            runner: windows-2025
+            architecture: x64
+            alpine: false
+          - rid: win-arm64
+            runner: windows-11-arm
+            architecture: arm64
+            alpine: false
+          - rid: osx-x64
+            runner: macos-15-intel
+            architecture: x64
+            alpine: false
+          - rid: osx-arm64
+            runner: macos-15
+            architecture: arm64
+            alpine: false
+          - rid: linux-x64
+            runner: ubuntu-24.04
+            architecture: x64
+            alpine: false
+          - rid: linux-arm64
+            runner: ubuntu-24.04-arm
+            architecture: arm64
+            alpine: false
+          - rid: linux-musl-x64
+            runner: ubuntu-24.04
+            architecture: x64
+            alpine: true
+          - rid: linux-musl-arm64
+            runner: ubuntu-24.04-arm
+            architecture: arm64
+            alpine: true
+    env:
+      RID: ${{ matrix.rid }}
+      DOTNET_NOLOGO: 'true'
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 'true'
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check license configuration
+        env:
+          AvaloniaUILicenseKey: ${{ secrets.AVALONIA_UI_LICENSE_KEY }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:AvaloniaUILicenseKey))
+          {
+            throw 'Set the AVALONIA_UI_LICENSE_KEY repository secret before publishing.'
+          }
+
+      - name: Install .NET SDK
+        if: ${{ !matrix.alpine }}
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+          architecture: ${{ matrix.architecture }}
+
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux' && !matrix.alpine
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes clang build-essential zlib1g-dev
+
+      - name: Publish NativeAOT
+        if: ${{ !matrix.alpine }}
+        env:
+          AvaloniaUILicenseKey: ${{ secrets.AVALONIA_UI_LICENSE_KEY }}
+        run: |
+          dotnet publish SatoriInsight/SatoriInsight.csproj -c Release -r $env:RID `
+            --self-contained true -p:PublishAot=true -p:DebugType=None -p:DebugSymbols=false `
+            -o "artifacts/publish/$env:RID"
+          if ($LASTEXITCODE -ne 0)
+          {
+            exit $LASTEXITCODE
+          }
+
+      - name: Publish NativeAOT for musl
+        if: matrix.alpine
+        shell: bash
+        env:
+          AvaloniaUILicenseKey: ${{ secrets.AVALONIA_UI_LICENSE_KEY }}
+        run: |
+          docker run --rm \
+            --env AvaloniaUILicenseKey \
+            --env DOTNET_NOLOGO=true \
+            --env DOTNET_CLI_TELEMETRY_OPTOUT=true \
+            --env DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
+            --volume "$GITHUB_WORKSPACE:/workspace" \
+            --workdir /workspace \
+            mcr.microsoft.com/dotnet/sdk:10.0-alpine-aot \
+            sh -ec '
+              apk add --no-cache icu-libs
+              dotnet publish SatoriInsight/SatoriInsight.csproj -c Release -r "$1" \
+                --self-contained true -p:PublishAot=true -p:DebugType=None -p:DebugSymbols=false \
+                -o "artifacts/publish/$1"
+            ' sh "$RID"
+
+      - name: Package application
+        run: ./.github/scripts/Pack-Native.ps1 -RuntimeIdentifier $env:RID
+
+      - name: Upload application
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: SatoriInsight-${{ matrix.rid }}
+          path: artifacts/packages/*
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
