@@ -1,0 +1,92 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:SatoriInsight.ViewModels" xmlns:models="using:SatoriInsight.Models" xmlns:local="using:SatoriInsight.Controls"
+    x:DataType="vm:RegionMapViewModel" x:Class="SatoriInsight.Controls.RegionsView">
+    <Border Classes="panel" Padding="20">
+        <StackPanel Spacing="14">
+            <TextBlock Text="Regions" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding MapSourceLabel}" TextWrapping="Wrap" Classes="muted" FontSize="11" />
+            <StackPanel Spacing="12">
+                <WrapPanel>
+                    <TextBlock Text="Color" VerticalAlignment="Center" Margin="0,0,10,0" />
+                    <ComboBox ItemsSource="{Binding ColorOptions}" SelectedIndex="{Binding ColorIndex}" Width="150" Margin="0,0,24,0" />
+                    <TextBlock Text="Cell" VerticalAlignment="Center" Margin="0,0,10,0" />
+                    <Slider Name="CellSlider" Minimum="4" Maximum="36" Value="{Binding CellSize}" Width="150" VerticalAlignment="Center"
+                        ToolTip.Tip="Region tile size" />
+                    <TextBlock Text="One cell per range" Classes="muted" FontSize="11" VerticalAlignment="Center" Margin="24,0,0,0" />
+                </WrapPanel>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <StackPanel IsVisible="{Binding HasColorGradient}" Orientation="Horizontal" Spacing="8" Margin="0,2,16,2"
+                            VerticalAlignment="Top">
+                            <TextBlock Text="0%" Classes="muted" FontSize="11" VerticalAlignment="Center" />
+                            <Border Width="160" Height="10" Background="{Binding ColorGradient}" VerticalAlignment="Center" />
+                            <TextBlock Text="100%" Classes="muted" FontSize="11" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ScrollViewer Grid.Column="1" MaxHeight="68" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding ColorLegend}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="local:RegionLegendItem">
+                                        <StackPanel Orientation="Horizontal" Spacing="5" Margin="0,2,12,2" ToolTip.Tip="{Binding Description}">
+                                            <Border Width="10" Height="10" Background="{Binding Brush}" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding Label}" Foreground="{Binding TextBrush}" FontSize="11" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" VerticalAlignment="Top" Margin="0,2,0,0"
+                        ToolTip.Tip="Region contains pinned objects.">
+                        <Ellipse Width="9" Height="9" Fill="{x:Static local:RegionPalette.PinnedBrush}" Stroke="#0C111A" StrokeThickness="1.5"
+                            VerticalAlignment="Center" />
+                        <TextBlock Text="Pinned" FontSize="11" FontWeight="Medium" />
+                    </StackPanel>
+                </Grid>
+                <ScrollViewer Height="120" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <local:RegionMap Name="HeapMap" Regions="{Binding Regions}" SelectedRegion="{Binding SelectedRegion}"
+                        ColorMode="{Binding ColorMode}" CellSize="{Binding CellSize}" />
+                </ScrollViewer>
+                <TextBlock Text="Cell size does not represent memory size." Classes="muted" FontSize="10" TextWrapping="Wrap" />
+            </StackPanel>
+            <Expander Header="Region details" HorizontalContentAlignment="Stretch">
+                <StackPanel Spacing="12">
+                    <Border Classes="panel" Padding="16">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="{Binding RegionSummary}" TextWrapping="Wrap" FontSize="12" LineHeight="19" />
+                            <local:FragmentStrip Region="{Binding SelectedRegion}" Holes="{Binding RegionHoles}" Objects="{Binding RegionLayoutObjects}"
+                                Height="36" />
+                            <TextBlock Text="{Binding RegionLayoutCaption}" Classes="muted" FontSize="10" TextWrapping="Wrap" />
+                            <DataGrid IsVisible="{Binding HasObjectCapture}" ItemsSource="{Binding RegionHoles}" Height="150"
+                                RowHeight="30" IsReadOnly="True" AutoGenerateColumns="False">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn x:DataType="models:FreeHole" Header="Free hole address" Binding="{Binding AddressLabel}" Width="*" />
+                                    <DataGridTextColumn x:DataType="models:FreeHole" Header="Size" Binding="{Binding SizeLabel}" Width="110" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+                    <Border IsVisible="{Binding HasObjectCapture}" Classes="panel" Padding="16">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="{Binding RegionObjectsLabel}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+                            <Button Content="Browse region objects →" Click="RegionObjects_Click" Classes="secondary" />
+                            <DataGrid Name="RegionObjectsGrid" ItemsSource="{Binding RegionObjects}"
+                                SelectedItem="{Binding SelectedRegionObject}" DoubleTapped="RegionObject_DoubleTapped" Height="310" RowHeight="30"
+                                IsReadOnly="True" AutoGenerateColumns="False">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Address" Binding="{Binding AddressLabel}" Width="145" />
+                                    <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Type" Binding="{Binding Type}" Width="*" />
+                                    <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Size" Binding="{Binding SizeLabel}" Width="100" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Expander>
+        </StackPanel>
+    </Border>
+</UserControl>

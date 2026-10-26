@@ -1,0 +1,17 @@
+bin/
+obj/
+TestResults/
+artifacts/
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.binlog
+*.dmp
+*.nettrace
+*.gcdump
+.env
+.env.*
+!.env.example

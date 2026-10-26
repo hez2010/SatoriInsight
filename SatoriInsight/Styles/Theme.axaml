@@ -1,0 +1,137 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:fa="using:FluentAvalonia.UI.Controls">
+    <Style Selector=":is(Window)">
+        <Setter Property="FontFamily" Value="avares://Avalonia.Fonts.Inter/Assets#Inter" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="#E5EBF2" />
+        <Setter Property="Background" Value="#0C111A" />
+    </Style>
+    <Style Selector="TextBlock.muted">
+        <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+    </Style>
+    <Style Selector="TextBlock.eyebrow">
+        <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="LetterSpacing" Value="1.4" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBlock.mono">
+        <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, monospace" />
+        <Setter Property="FontSize" Value="11" />
+    </Style>
+    <Style Selector="Border.panel">
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="20" />
+    </Style>
+    <Style Selector="Border.source-badge">
+        <Setter Property="Background" Value="#26303F" />
+    </Style>
+    <Style Selector="Border.source-badge.connected">
+        <Setter Property="Background" Value="#27392D" />
+    </Style>
+    <Style Selector="Button">
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="13,8" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.secondary">
+        <Setter Property="Background" Value="#1B2330" />
+        <Setter Property="BorderBrush" Value="#354052" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="#E5EBF2" />
+    </Style>
+    <Style Selector="Button.secondary:not(:disabled):pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#263142" />
+        <Setter Property="BorderBrush" Value="#46566C" />
+        <Setter Property="Foreground" Value="#E5EBF2" />
+    </Style>
+    <Style Selector="Button.secondary:not(:disabled):pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#151D29" />
+        <Setter Property="BorderBrush" Value="#354052" />
+        <Setter Property="Foreground" Value="#CED6E0" />
+    </Style>
+    <Style Selector="Button.primary">
+        <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+        <Setter Property="Foreground" Value="#172512" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Button.primary:not(:disabled):pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#C5F19B" />
+        <Setter Property="BorderBrush" Value="#C5F19B" />
+        <Setter Property="Foreground" Value="#172512" />
+    </Style>
+    <Style Selector="Button.primary:not(:disabled):pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#A3D473" />
+        <Setter Property="BorderBrush" Value="#A3D473" />
+        <Setter Property="Foreground" Value="#172512" />
+    </Style>
+    <Style Selector="Button.danger">
+        <Setter Property="Background" Value="#F29A91" />
+        <Setter Property="BorderBrush" Value="#F29A91" />
+        <Setter Property="Foreground" Value="#3B1714" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Button.danger:not(:disabled):pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#F6B1A9" />
+        <Setter Property="BorderBrush" Value="#F6B1A9" />
+        <Setter Property="Foreground" Value="#3B1714" />
+    </Style>
+    <Style Selector="Button.danger:not(:disabled):pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#D9847B" />
+        <Setter Property="BorderBrush" Value="#D9847B" />
+        <Setter Property="Foreground" Value="#3B1714" />
+    </Style>
+    <Style Selector="ComboBox">
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Background" Value="#1B2330" />
+        <Setter Property="BorderBrush" Value="#354052" />
+        <Setter Property="Padding" Value="10,5" />
+    </Style>
+    <Style Selector="ComboBox /template/ ContentPresenter#ContentPresenter">
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="DataGrid">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="GridLinesVisibility" Value="Horizontal" />
+        <Setter Property="HorizontalGridLinesBrush" Value="#252E3D" />
+        <Setter Property="RowHeight" Value="44" />
+        <Setter Property="ColumnHeaderHeight" Value="35" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="DataGridColumnHeader">
+        <Setter Property="Background" Value="#151B26" />
+        <Setter Property="Foreground" Value="#8795A9" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="DataGridColumnHeader /template/ ContentPresenter">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="DataGridColumnHeader:sortascending /template/ fa|FAFontIcon#SortIcon,
+        DataGridColumnHeader:sortdescending /template/ fa|FAFontIcon#SortIcon">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Height" Value="12" />
+        <Setter Property="Margin" Value="4,0,0,0" />
+    </Style>
+    <Style Selector="DataGridCell">
+        <Setter Property="Padding" Value="0" />
+    </Style>
+    <Style Selector="ProgressBar">
+        <Setter Property="Height" Value="5" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Background" Value="#293141" />
+        <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+    </Style>
+</Styles>

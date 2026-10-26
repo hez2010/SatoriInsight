@@ -1,0 +1,23 @@
+<Application xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:fa="using:FluentAvalonia.Styling"
+    xmlns:local="using:SatoriInsight.Controls" x:Class="SatoriInsight.App" RequestedThemeVariant="Dark">
+    <Application.Resources>
+        <local:GenerationBrushConverter x:Key="GenerationBrushConverter" />
+        <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
+        <SolidColorBrush x:Key="DataGridRowSelectedBackgroundBrush">#2C3A2D</SolidColorBrush>
+        <SolidColorBrush x:Key="DataGridRowSelectedUnfocusedBackgroundBrush">#27362D</SolidColorBrush>
+        <SolidColorBrush x:Key="DataGridRowSelectedHoveredBackgroundBrush">#344633</SolidColorBrush>
+        <SolidColorBrush x:Key="DataGridRowSelectedHoveredUnfocusedBackgroundBrush">#30402F</SolidColorBrush>
+        <SolidColorBrush x:Key="SurfaceBrush">#151B26</SolidColorBrush>
+        <SolidColorBrush x:Key="PanelBrush">#101620</SolidColorBrush>
+        <SolidColorBrush x:Key="LineBrush">#283140</SolidColorBrush>
+        <SolidColorBrush x:Key="MutedBrush">#8795A9</SolidColorBrush>
+        <SolidColorBrush x:Key="AccentBrush">#B7EE81</SolidColorBrush>
+        <SolidColorBrush x:Key="Gen0Brush" Color="{x:Static local:GenerationPalette.Gen0Color}" />
+        <SolidColorBrush x:Key="Gen1Brush" Color="{x:Static local:GenerationPalette.Gen1Color}" />
+        <SolidColorBrush x:Key="Gen2Brush" Color="{x:Static local:GenerationPalette.Gen2Color}" />
+    </Application.Resources>
+    <Application.Styles>
+        <fa:FluentAvaloniaTheme PreferSystemTheme="False" CustomAccentColor="#B7EE81" />
+        <StyleInclude Source="avares://SatoriInsight/Styles/Theme.axaml" />
+    </Application.Styles>
+</Application>

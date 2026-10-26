@@ -1,0 +1,324 @@
+<faWindow:FAAppWindow xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:fa="using:FluentAvalonia.UI.Controls"
+    xmlns:faWindow="using:FluentAvalonia.UI.Windowing" xmlns:models="using:SatoriInsight.Models" xmlns:local="using:SatoriInsight.Controls" xmlns:vm="using:SatoriInsight.ViewModels"
+    x:DataType="vm:MainViewModel" x:Class="SatoriInsight.MainWindow" Title="Satori Insight" Width="1480" Height="1020" MinWidth="1120" MinHeight="760"
+    WindowStartupLocation="CenterScreen">
+    <Grid RowDefinitions="64,*,28">
+        <Border Name="TitleBarArea" Background="#101620" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1" Padding="24,0"
+            PointerPressed="TitleBarArea_PointerPressed">
+            <Grid Name="HeaderContent" ColumnDefinitions="180,*,Auto" ColumnSpacing="18" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="11" VerticalAlignment="Center">
+                    <Border Width="30" Height="30" CornerRadius="8" Background="#29372C">
+                        <Path Data="M14.5,14.5 L21,21 M17,10 A7,7 0 1 1 3,10 A7,7 0 1 1 17,10" Stroke="#B7EE81" StrokeThickness="2" StrokeLineCap="Round"
+                            Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="Satori" FontSize="21" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Text="INSIGHT" Classes="eyebrow" VerticalAlignment="Center" Margin="1,4,0,0" />
+                </StackPanel>
+                <Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="12" VerticalAlignment="Center">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{Binding TargetName}" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding TargetMetadata}" Classes="muted" FontSize="10" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <Border Grid.Column="1" Classes="source-badge" Classes.connected="{Binding IsConnected}" CornerRadius="4" Padding="7,4"
+                        VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SourceBadge}" FontSize="9" FontWeight="SemiBold" Foreground="#D5DBBF" LetterSpacing="0.6" />
+                    </Border>
+                </Grid>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="9">
+                    <Button Name="ExportButton" Content="↥  Export session" IsEnabled="{Binding HasSessionData}" Classes="secondary" Click="ExportSession_Click" />
+                    <Button Content="Open session" IsEnabled="{Binding CanOpenSession}" Classes="secondary" Click="ImportSession_Click" />
+                    <Button Name="DisconnectButton" Content="{Binding DisconnectButtonLabel}" IsVisible="{Binding CanDisconnect}" Classes="secondary"
+                        Click="Disconnect_Click" />
+                    <Button Name="ConnectButton" Content="{Binding ProcessButtonLabel}" IsEnabled="{Binding CanSelectProcess}" Classes="secondary"
+                        Click="SelectProcess_Click" />
+                    <Button Name="LaunchProcessButton" Content="{Binding LaunchProcessButtonLabel}" IsEnabled="{Binding CanSelectProcess}"
+                        Classes.primary="{Binding !HasLaunchedProcess}" Classes.danger="{Binding HasLaunchedProcess}" Click="LaunchProcess_Click" />
+                </StackPanel>
+            </Grid>
+        </Border>
+        <fa:FANavigationView Grid.Row="1" Name="Navigation" PaneDisplayMode="Left" IsPaneOpen="True" OpenPaneLength="192" CompactPaneLength="48"
+            IsBackButtonVisible="False" IsSettingsVisible="False" IsPaneToggleButtonVisible="False" AlwaysShowHeader="False"
+            SelectionChanged="Navigation_SelectionChanged">
+            <fa:FANavigationView.PaneHeader>
+                <TextBlock Text="INSPECT" Classes="eyebrow" Margin="22,26,0,17" />
+            </fa:FANavigationView.PaneHeader>
+            <fa:FANavigationView.MenuItems>
+                <fa:FANavigationViewItem Content="Memory activity" Tag="0" IsSelected="{Binding IsMemoryActivityView, Mode=OneWay}">
+                    <fa:FANavigationViewItem.IconSource>
+                        <fa:FASymbolIconSource Symbol="Home" />
+                    </fa:FANavigationViewItem.IconSource>
+                </fa:FANavigationViewItem>
+                <fa:FANavigationViewItem Content="Heap inspector" Tag="1" IsSelected="{Binding IsHeapInspectorView, Mode=OneWay}">
+                    <fa:FANavigationViewItem.IconSource>
+                        <fa:FASymbolIconSource Symbol="Library" />
+                    </fa:FANavigationViewItem.IconSource>
+                </fa:FANavigationViewItem>
+            </fa:FANavigationView.MenuItems>
+            <fa:FANavigationView.PaneFooter>
+                <StackPanel Spacing="12" Margin="22,16,18,25">
+                    <Border Height="1" Background="{StaticResource LineBrush}" Margin="0,0,0,5" />
+                    <TextBlock Text="THIS SESSION" Classes="eyebrow" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="GC heaps" Classes="muted" FontSize="11" />
+                        <TextBlock Grid.Column="1" Text="{Binding HeapCountLabel}" FontSize="11" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="Elapsed" Classes="muted" FontSize="11" />
+                        <TextBlock Grid.Column="1" Text="{Binding SessionTime}" Classes="mono" />
+                    </Grid>
+                    <TextBlock Text="{Binding AppVersionLabel}" Foreground="#59697E" FontSize="10" Margin="0,10,0,0" />
+                </StackPanel>
+            </fa:FANavigationView.PaneFooter>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="26,20,26,20" Spacing="16">
+                    <Border IsVisible="{Binding IsReplay}" Classes="panel" Padding="14">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                            <Button Content="{Binding ReplayPlayLabel}" Click="Replay_Click" VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Text="RECORDED SESSION" Classes="eyebrow" />
+                                <Slider Minimum="{Binding ReplayMinimum}" Maximum="{Binding ReplayMaximum}" Value="{Binding ReplayPosition}" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="2" Text="{Binding SessionTime}" Classes="mono" VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Spacing="7">
+                            <TextBlock Text="{Binding PageTitle}" FontSize="25" FontWeight="SemiBold" LetterSpacing="-0.7" />
+                            <TextBlock Text="{Binding PageSubtitle}" Classes="muted" FontSize="12" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Name="PauseButton" Content="{Binding PauseLabel}" IsEnabled="{Binding CanPause}"
+                            Command="{Binding TogglePauseCommand}" Classes="secondary" VerticalAlignment="Center" />
+                    </Grid>
+                    <Border IsVisible="{Binding IsMemoryActivityView}" Classes="panel" Padding="18,12"
+                        ToolTip.Tip="Observed collections by generation for the selected time or period.">
+                        <Grid ColumnDefinitions="*,*,*,2*" ColumnSpacing="20">
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="GEN0 COLLECTIONS" Classes="eyebrow" Foreground="{StaticResource Gen0Brush}" />
+                                <TextBlock Name="Gen0Counter" Text="{Binding Gen0CountLabel}" FontSize="22" FontWeight="SemiBold" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="5">
+                                <TextBlock Text="GEN1 COLLECTIONS" Classes="eyebrow" Foreground="{StaticResource Gen1Brush}" />
+                                <TextBlock Name="Gen1Counter" Text="{Binding Gen1CountLabel}" FontSize="22" FontWeight="SemiBold" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="5">
+                                <TextBlock Text="GEN2 COLLECTIONS" Classes="eyebrow" Foreground="{StaticResource Gen2Brush}" />
+                                <TextBlock Name="Gen2Counter" Text="{Binding Gen2CountLabel}" FontSize="22" FontWeight="SemiBold" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="3" Text="{Binding CollectionCountsCaption}" Classes="muted" FontSize="11" TextWrapping="Wrap"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                    <fa:FAInfoBar IsVisible="{Binding ShowStateNotice}" IsOpen="True" IsClosable="False" Severity="Informational"
+                        Title="{Binding StateNoticeTitle}" Message="{Binding StateNoticeMessage}" />
+                    <fa:FAInfoBar IsVisible="{Binding ShowQualityNotice}" IsOpen="True" IsClosable="False" Severity="Warning" Title="Collection health"
+                        Message="{Binding QualityMessage}" />
+                    <local:HeapInspectorView IsVisible="{Binding IsHeapInspectorView}" />
+                    <Grid IsVisible="{Binding IsMemoryActivityView}" ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                        <Border Classes="panel" Padding="17,14" ToolTip.Tip="{Binding CpuTimeTooltip}">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="CPU TIME" Classes="eyebrow" />
+                                <TextBlock Name="CpuTimeValue" Text="{Binding CpuTimeLabel}" FontSize="22" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding ProcessTimeCaption}" Classes="muted" FontSize="11" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="1" Classes="panel" Padding="17,14">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="WALL-CLOCK TIME" Classes="eyebrow" />
+                                <TextBlock Name="WallClockTimeValue" Text="{Binding WallClockTimeLabel}" FontSize="22" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding ProcessTimeCaption}" Classes="muted" FontSize="11" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Classes="panel" Padding="17,14"
+                            ToolTip.Tip="Resident process memory, including managed and native memory. Peak reflects recorded measurements.">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="RSS" Classes="eyebrow" />
+                                <TextBlock Name="ResidentMemoryValue" Text="{Binding ResidentMemoryLabel}" FontSize="22" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding PeakResidentMemoryLabel}" Classes="muted" FontSize="11" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <Grid IsVisible="{Binding IsMemoryActivityView}" ColumnDefinitions="*,*,*,*" ColumnSpacing="12">
+                        <Border Classes="panel" Padding="17,14">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="MANAGED HEAP" Classes="eyebrow" />
+                                <TextBlock Text="{Binding UsedLabel}" FontSize="25" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding CommittedLabel}" Classes="muted" FontSize="11" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="1" Classes="panel" Padding="17,14">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{Binding AllocationTitle}" Classes="eyebrow" />
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{Binding AllocationLabel}" FontSize="25" FontWeight="SemiBold" />
+                                    <TextBlock Text="MiB/s" Classes="muted" VerticalAlignment="Bottom" Margin="0,0,0,4" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Classes="panel" Padding="17,14">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="P99 GC PAUSE" Classes="eyebrow" />
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{Binding P99Label}" FontSize="25" FontWeight="SemiBold" />
+                                    <TextBlock Text="ms" Classes="muted" VerticalAlignment="Bottom" Margin="0,0,0,4" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding GcCountLabel}" Classes="muted" FontSize="11" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="3" Classes="panel" Padding="17,14">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="TIME IN GC PAUSE" Classes="eyebrow" />
+                                <TextBlock Text="{Binding PausePercentLabel}" FontSize="25" FontWeight="SemiBold" />
+                                <TextBlock Text="Share of elapsed time" Classes="muted" FontSize="11" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <Grid IsVisible="{Binding IsMemoryActivityView}" ColumnDefinitions="*,1.35*" ColumnSpacing="16">
+                        <Border Name="GenerationSummaryPanel" Classes="panel" Padding="20">
+                            <StackPanel Spacing="18">
+                                <StackPanel Spacing="5">
+                                    <TextBlock Text="GC heap by generation" FontSize="16" FontWeight="SemiBold" />
+                                    <TextBlock Text="Latest generation sizes" ToolTip.Tip="Sizes may lag recent allocations. — means unavailable."
+                                        Classes="muted" FontSize="11" />
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding GenerationSizes}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="3" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:GenerationSizeViewModel">
+                                            <StackPanel Spacing="12" Margin="0,8,12,8">
+                                                <TextBlock Text="{Binding Label}" FontSize="12"
+                                                    Foreground="{Binding Generation, Converter={StaticResource GenerationBrushConverter}}" />
+                                                <TextBlock Text="{Binding SizeLabel}" FontSize="20" FontWeight="SemiBold"
+                                                    TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SizeLabel}" />
+                                                <ProgressBar Value="{Binding RelativeSize}" Height="6" MinWidth="0"
+                                                    Foreground="{Binding Generation, Converter={StaticResource GenerationBrushConverter}}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <StackPanel Spacing="7" Margin="0,4,0,4">
+                                    <TextBlock Text="GC FRAGMENTATION" Classes="eyebrow" />
+                                    <TextBlock Text="{Binding LiveFragmentationLabel}" FontSize="18" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <local:RegionsView Grid.Column="1" DataContext="{Binding LiveRegionMap}" VerticalContentAlignment="Stretch" />
+                    </Grid>
+                    <Grid IsVisible="{Binding IsMemoryActivityView}" ColumnDefinitions="*,1.35*" ColumnSpacing="16">
+                        <Border Classes="panel" Padding="20">
+                            <local:PauseHistogramView />
+                        </Border>
+                        <Border Grid.Column="1" Classes="panel" Padding="20">
+                            <local:MemoryHistoryView />
+                        </Border>
+                    </Grid>
+                    <StackPanel IsVisible="{Binding IsMemoryActivityView}" Spacing="16">
+                        <Border Classes="panel">
+                            <StackPanel Spacing="12">
+                                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="12">
+                                    <TextBlock Text="Collection log" FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center" />
+                                    <ComboBox Grid.Column="1" ItemsSource="{Binding GenerationFilterOptions}" SelectedIndex="{Binding GenerationFilterIndex}"
+                                        Width="190" />
+                                    <TextBlock Grid.Column="2" Text="{Binding EventFilterLabel}" Classes="muted" VerticalAlignment="Center" />
+                                    <Button Grid.Column="3" Content="Clear filter" IsVisible="{Binding HasPauseFilter}"
+                                        Command="{Binding ClearPauseFilterCommand}" Classes="secondary" Padding="9,5" />
+                                </Grid>
+                                <TextBlock IsVisible="{Binding !HasEvents}" Text="{Binding EmptyEventsLabel}" Classes="muted" Margin="12,8" />
+                                <DataGrid Name="EventsGrid" Height="290" ItemsSource="{Binding EventLog}"
+                                    SelectedItem="{Binding SelectedEvent}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeColumns="True"
+                                    SelectionMode="Single">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="GC #" Binding="{Binding NumberLabel}" Width="80" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Completed" Binding="{Binding TimeLabel}" Width="112" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Gen" Binding="{Binding GenerationLabel}" Width="65" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Mode" Binding="{Binding Kind}" Width="140" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Reason / outcome" Binding="{Binding Reason}" Width="160" />
+                                        <DataGridTemplateColumn Header="Before" SortMemberPath="BeforeBytes" Width="112">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate x:DataType="models:GcEvent">
+                                                    <TextBlock Text="{Binding BeforeLabel}" ToolTip.Tip="{Binding BeforeTooltip}" Margin="12,0"
+                                                        VerticalAlignment="Center" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="After" Binding="{Binding AfterLabel}" Width="112" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="GC pause" Binding="{Binding PauseLabel}" Width="110" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="GC duration" Binding="{Binding DurationLabel}" Width="120" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Promoted" Binding="{Binding PromotedLabel}" Width="112" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Memory scope" Binding="{Binding MemoryScope}" Width="140" />
+                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Suspend latency" Binding="{Binding SuspendLabel}" Width="140" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="panel">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{Binding EventTitle}" FontWeight="SemiBold" FontSize="15" />
+                                <Grid ColumnDefinitions="*,*,*,*,*">
+                                    <StackPanel Spacing="5">
+                                        <TextBlock Text="{Binding EventReasonTitle}" Classes="eyebrow" />
+                                        <TextBlock Text="{Binding EventReason}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="5">
+                                        <TextBlock Text="GC PAUSE" Classes="eyebrow" />
+                                        <TextBlock Text="{Binding EventPause}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="5">
+                                        <TextBlock Text="SUSPEND LATENCY" Classes="eyebrow" />
+                                        <TextBlock Text="{Binding EventSuspend}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="3" Spacing="5">
+                                        <TextBlock Text="GC DURATION" Classes="eyebrow" />
+                                        <TextBlock Text="{Binding EventDuration}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="4" Spacing="5">
+                                        <TextBlock Text="MODE" Classes="eyebrow" />
+                                        <TextBlock Text="{Binding EventMode}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="0,14,0,0">
+                                    <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="16">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="MEMORY SCOPE" Classes="eyebrow" />
+                                            <TextBlock Text="{Binding EventMemoryScope}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="5" ToolTip.Tip="{Binding EventBeforeTooltip}">
+                                            <TextBlock Text="BEFORE" Classes="eyebrow" />
+                                            <TextBlock Text="{Binding EventBefore}" FontSize="18" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="5">
+                                            <TextBlock Text="AFTER" Classes="eyebrow" />
+                                            <TextBlock Text="{Binding EventAfter}" FontSize="18" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="3" Spacing="5">
+                                            <TextBlock Text="PROMOTED" Classes="eyebrow" />
+                                            <TextBlock Text="{Binding EventPromoted}" FontSize="18" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                                <DataGrid IsVisible="{Binding HasEventGenerations}" ItemsSource="{Binding EventGenerations}"
+                                    AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeColumns="True" MaxHeight="220">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="Generation" Binding="{Binding Generation}" Width="*" />
+                                        <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="Before" Binding="{Binding BeforeLabel}" Width="*" />
+                                        <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="After" Binding="{Binding AfterLabel}" Width="*" />
+                                        <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="Promoted" Binding="{Binding PromotedLabel}" Width="*" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </fa:FANavigationView>
+        <Border Grid.Row="2" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Background="#101620" Padding="16,0">
+            <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center" ColumnSpacing="16">
+                <TextBlock Text="{Binding StreamLabel}" FontSize="9" Foreground="#B7CE9F" LetterSpacing="0.7" />
+                <TextBlock Grid.Column="1" Text="{Binding Status}" Classes="muted" FontSize="10" TextTrimming="CharacterEllipsis" />
+            </Grid>
+        </Border>
+    </Grid>
+</faWindow:FAAppWindow>

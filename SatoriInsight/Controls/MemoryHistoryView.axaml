@@ -1,0 +1,63 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:charts="using:Avalonia.Controls.Charts"
+    xmlns:local="using:SatoriInsight.Controls" xmlns:vm="using:SatoriInsight.ViewModels" x:DataType="vm:MainViewModel"
+    x:Class="SatoriInsight.Controls.MemoryHistoryView">
+    <StackPanel Spacing="6">
+        <Grid ColumnDefinitions="*,Auto" Height="32">
+            <TextBlock Text="Heap &amp; collection timeline" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Name="ResetTimelineButton" Content="Reset" Click="Reset_Click" IsEnabled="{Binding HasTimelineSelection}"
+                Classes="secondary" Padding="10,5" AutomationProperties.Name="Reset timeline selection" />
+        </Grid>
+        <TextBlock Text="{Binding TimelineSelectionLabel}" Classes="muted" FontSize="11"
+            ToolTip.Tip="Click a time or drag a range. Memory sizes show the end of the selected range." />
+        <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,2,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <Rectangle Width="12" Height="2" Fill="{StaticResource AccentBrush}" />
+                <TextBlock Text="Managed heap (MiB)" Classes="muted" FontSize="10" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <Rectangle Width="12" Height="2" Fill="#63748A" />
+                <TextBlock Text="Committed (MiB)" Classes="muted" FontSize="10" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <Rectangle Width="12" Height="2" Fill="#69B7DF" />
+                <TextBlock Text="RSS (MiB)" Classes="muted" FontSize="10" />
+            </StackPanel>
+        </StackPanel>
+        <Grid Height="110">
+            <charts:CartesianChart Name="MemoryChart" IsVisible="{Binding HasHistory}" Height="110" ShowLegend="False" IsAnimationEnabled="False"
+                IsTooltipEnabled="True" AxisBrush="#354052" GridLineBrush="#222C3B" LabelForeground="#8795A9" Background="Transparent">
+                <charts:CartesianChart.HorizontalAxis>
+                    <charts:NumericalAxis Minimum="0" Maximum="{Binding ChartMaximumSeconds}" MajorStep="{Binding ChartStepSeconds}" LabelFontSize="9"
+                        LabelForeground="#8795A9" LabelFormat="0" />
+                </charts:CartesianChart.HorizontalAxis>
+                <charts:CartesianChart.VerticalAxis>
+                    <charts:NumericalAxis Minimum="0" LabelFontSize="9" LabelForeground="#8795A9" />
+                </charts:CartesianChart.VerticalAxis>
+                <charts:CartesianChart.Series>
+                    <charts:LineSeries Title="Committed MiB" ItemsSource="{Binding History}" CategoryPath="Seconds" ValuePath="CommittedMiB"
+                        EmptyPointMode="Gap" Stroke="#63748A" StrokeThickness="1" ShowMarkers="True" MarkerSize="3" MarkerFill="#63748A" />
+                    <charts:LineSeries Title="Managed heap MiB" ItemsSource="{Binding History}" CategoryPath="Seconds" ValuePath="UsedMiB" EmptyPointMode="Gap"
+                        Stroke="#B7EE81" StrokeThickness="2" ShowMarkers="True" MarkerSize="3" MarkerFill="#B7EE81" />
+                    <charts:LineSeries Title="RSS MiB" ItemsSource="{Binding ProcessHistory}" CategoryPath="Seconds" ValuePath="ResidentMiB" EmptyPointMode="Gap"
+                        Stroke="#69B7DF" StrokeThickness="1.5" ShowMarkers="True" MarkerSize="3" MarkerFill="#69B7DF" />
+                </charts:CartesianChart.Series>
+                <charts:CartesianChart.PlotAreaContent>
+                    <Grid IsHitTestVisible="False">
+                        <Border Name="PlotAreaProbe" />
+                        <local:TimelineSelectionOverlay Start="{Binding TimelineSelectionStart}" End="{Binding TimelineSelectionEnd}"
+                            Maximum="{Binding ChartMaximumSeconds}" />
+                    </Grid>
+                </charts:CartesianChart.PlotAreaContent>
+            </charts:CartesianChart>
+            <TextBlock IsVisible="{Binding !HasHistory}" Text="{Binding EmptyHistoryLabel}" Classes="muted" FontSize="11" HorizontalAlignment="Center"
+                VerticalAlignment="Center" IsHitTestVisible="False" />
+        </Grid>
+        <Grid Height="64">
+            <local:GcTimeline Name="CollectionTimeline" Events="{Binding TimelineEvents}" SelectedEvent="{Binding SelectedEvent}"
+                EndSeconds="{Binding ChartMaximumSeconds}" />
+            <local:TimelineSelectionOverlay Name="CollectionSelection" Start="{Binding TimelineSelectionStart}" End="{Binding TimelineSelectionEnd}"
+                Maximum="{Binding ChartMaximumSeconds}" IsHitTestVisible="False" />
+        </Grid>
+        <TextBlock Text="Click a time · drag a period · Reset to clear selection" Classes="muted" FontSize="10" HorizontalAlignment="Right" />
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,34 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:vm="using:SatoriInsight.ViewModels"
+    x:DataType="vm:LaunchProcessViewModel" x:Class="SatoriInsight.Controls.LaunchProcessView" Width="640">
+    <StackPanel Spacing="14">
+        <StackPanel Spacing="6">
+            <TextBlock Text="Application" />
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <TextBox Name="LaunchApplication" Text="{Binding Application}" PlaceholderText="Executable or .NET DLL" AutomationProperties.Name="Application" />
+                <Button Grid.Column="1" Content="Browse…" Click="BrowseApplication_Click" Classes="secondary" />
+            </Grid>
+        </StackPanel>
+        <StackPanel Spacing="6">
+            <TextBlock Text="Arguments" />
+            <TextBox Name="LaunchArguments" Text="{Binding Arguments}" PlaceholderText="--name &quot;value with spaces&quot;"
+                AutomationProperties.Name="Arguments" />
+        </StackPanel>
+        <StackPanel Spacing="6">
+            <TextBlock Text="Working directory" />
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <TextBox Name="LaunchWorkingDirectory" Text="{Binding WorkingDirectory}" PlaceholderText="Application folder (default)"
+                    AutomationProperties.Name="Working directory" />
+                <Button Grid.Column="1" Content="Browse…" Click="BrowseDirectory_Click" Classes="secondary" />
+            </Grid>
+        </StackPanel>
+        <StackPanel Spacing="6">
+            <TextBlock Text="Environment variables" />
+            <TextBox Name="LaunchEnvironment" Text="{Binding EnvironmentVariables}" AcceptsReturn="True" MinHeight="130" MaxHeight="190" TextWrapping="NoWrap"
+                FontFamily="Cascadia Mono, Consolas, monospace" PlaceholderText="NAME=value" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                AutomationProperties.Name="Environment variables" />
+            <TextBlock Text="One NAME=value per line. Other variables are inherited." Classes="muted" FontSize="11" />
+        </StackPanel>
+        <TextBlock Text="Disconnecting leaves the application running." Classes="muted" FontSize="11" />
+        <TextBlock Name="LaunchError" Text="{Binding Error}" IsVisible="{Binding HasError}" Foreground="#F29A91" TextWrapping="Wrap" />
+    </StackPanel>
+</UserControl>

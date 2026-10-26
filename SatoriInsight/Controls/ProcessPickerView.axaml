@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:vm="using:SatoriInsight.ViewModels"
+    xmlns:models="using:SatoriInsight.Models" x:DataType="vm:MainViewModel" x:Class="SatoriInsight.Controls.ProcessPickerView" Width="640" Height="420">
+    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+            <TextBox Name="ProcessSearchBox" Text="{Binding ProcessSearch}" PlaceholderText="Search by process name or PID"
+                AutomationProperties.Name="Search local .NET processes" />
+            <Button Grid.Column="1" Content="Refresh" Click="Refresh_Click" IsEnabled="{Binding CanRefreshProcesses}" Classes="secondary" />
+        </Grid>
+        <DataGrid Grid.Row="1" Name="ProcessGrid" ItemsSource="{Binding LocalProcesses}" SelectedItem="{Binding SelectedLocalProcess}"
+            IsReadOnly="True" AutoGenerateColumns="False" SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Process" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:DataType="models:LocalDotNetProcess">
+                            <TextBlock Classes="process-name" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="12,0">
+                                <ToolTip.Tip>
+                                    <TextBlock Text="{Binding CommandLineTooltip}" MaxWidth="680" TextWrapping="Wrap" />
+                                </ToolTip.Tip>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn x:DataType="models:LocalDotNetProcess" Header="PID" Binding="{Binding ProcessId}" Width="100" />
+                <DataGridTextColumn x:DataType="models:LocalDotNetProcess" Header="Started (local)" Binding="{Binding StartedLabel}" Width="150" />
+            </DataGrid.Columns>
+        </DataGrid>
+        <StackPanel Grid.Row="2" Spacing="8">
+            <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsRefreshingProcesses}" Height="3" />
+            <TextBlock Text="{Binding ProcessCountLabel}" FontSize="12" />
+            <TextBlock Text="{Binding ProcessDiscoveryStatus}" TextWrapping="Wrap" Classes="muted" FontSize="12" />
+        </StackPanel>
+    </Grid>
+</UserControl>

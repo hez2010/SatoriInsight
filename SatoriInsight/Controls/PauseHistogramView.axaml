@@ -1,0 +1,69 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:charts="using:Avalonia.Controls.Charts"
+    xmlns:vm="using:SatoriInsight.ViewModels" x:DataType="vm:MainViewModel" x:Class="SatoriInsight.Controls.PauseHistogramView">
+    <UserControl.Styles>
+        <Style Selector="TextBlock.pause-stat-label">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="Width" Value="30" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.pause-stat-value">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </UserControl.Styles>
+    <StackPanel Spacing="6">
+        <Grid ColumnDefinitions="*,Auto" Height="32">
+            <TextBlock Text="GC pause distribution" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="STOP THE WORLD" Classes="eyebrow" FontSize="8" VerticalAlignment="Center" />
+        </Grid>
+        <TextBlock Text="{Binding PauseCountLabel}" Classes="muted" FontSize="11" />
+        <Grid Height="158">
+            <charts:CartesianChart Name="PauseChart" IsVisible="{Binding HasPauses}" Height="158" ShowLegend="False" IsAnimationEnabled="False"
+                IsTooltipEnabled="True" AxisBrush="#354052" GridLineBrush="#222C3B" LabelForeground="#8795A9" Background="Transparent"
+                DataPointClicked="PauseChart_DataPointClicked">
+                <charts:CartesianChart.HorizontalAxis>
+                    <charts:CategoryAxis LabelFontSize="9" LabelForeground="#8795A9" />
+                </charts:CartesianChart.HorizontalAxis>
+                <charts:CartesianChart.VerticalAxis>
+                    <charts:NumericalAxis Minimum="0" Maximum="{Binding HistogramMaximumCount}" MajorStep="{Binding HistogramCountStep}" LabelFontSize="9"
+                        LabelForeground="#8795A9" LabelFormat="0" />
+                </charts:CartesianChart.VerticalAxis>
+                <charts:CartesianChart.Series>
+                    <charts:BarSeries Title="Completed GCs" ItemsSource="{Binding Histogram}" CategoryPath="Label" ValuePath="Count" Fill="#9A96E5"
+                        BarCornerRadius="3" BarWidth="0.6" />
+                </charts:CartesianChart.Series>
+                <charts:CartesianChart.PlotAreaContent>
+                    <Border Name="HistogramPlotProbe" IsHitTestVisible="False" />
+                </charts:CartesianChart.PlotAreaContent>
+            </charts:CartesianChart>
+            <TextBlock IsVisible="{Binding !HasPauses}" Text="No recorded pauses" Classes="muted" FontSize="11" HorizontalAlignment="Center"
+                VerticalAlignment="Center" />
+        </Grid>
+        <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" RowSpacing="8" Margin="0,3,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="p50" Classes="pause-stat-label" />
+                <TextBlock Text="{Binding P50Label}" Classes="pause-stat-value" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="p95" Classes="pause-stat-label" />
+                <TextBlock Text="{Binding P95Label}" Classes="pause-stat-value" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="p99" Classes="pause-stat-label" />
+                <TextBlock Text="{Binding P99WithUnitsLabel}" Classes="pause-stat-value" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="p99.9" Classes="pause-stat-label" />
+                <TextBlock Text="{Binding P999Label}" Classes="pause-stat-value" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="max" Classes="pause-stat-label" />
+                <TextBlock Text="{Binding MaxPauseLabel}" Classes="pause-stat-value" />
+            </StackPanel>
+        </Grid>
+        <TextBlock Text="Click a bar to inspect matching collections." Classes="muted" FontSize="9" />
+    </StackPanel>
+</UserControl>

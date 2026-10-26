@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="SatoriInsight/SatoriInsight.csproj" />
+  <Folder Name="/Tests/">
+    <Project Path="SatoriInsight.Tests/SatoriInsight.Tests.csproj" />
+    <Project Path="SatoriInsight.Tests/Workloads/Managed/SatoriInsight.Workload.csproj" />
+  </Folder>
+</Solution>

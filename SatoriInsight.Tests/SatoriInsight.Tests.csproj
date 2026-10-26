@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1" PrivateAssets="all" />
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.4" />
+    <ProjectReference Include="../SatoriInsight/SatoriInsight.csproj" />
+    <ProjectReference Include="Workloads/Managed/SatoriInsight.Workload.csproj" ReferenceOutputAssembly="false" />
+    <Compile Include="Features/**/*.cs;Infrastructure/**/*.cs" />
+  </ItemGroup>
+  <Target Name="PrepareTestWorkloads" AfterTargets="Build">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)Workloads/Managed/SatoriInsight.Workload.csproj"
+             Targets="Build;GetTargetPath" Properties="Configuration=$(Configuration);TargetFramework=net8.0">
+      <Output TaskParameter="TargetOutputs" ItemName="_Net8Workload" />
+    </MSBuild>
+    <MSBuild Projects="$(MSBuildThisFileDirectory)Workloads/Managed/SatoriInsight.Workload.csproj"
+             Targets="GetTargetPath" Properties="Configuration=$(Configuration);TargetFramework=net10.0">
+      <Output TaskParameter="TargetOutputs" ItemName="_Net10Workload" />
+    </MSBuild>
+    <ItemGroup>
+      <_WorkloadFiles Include="%(_Net8Workload.RootDir)%(_Net8Workload.Directory)*">
+        <DestinationFolder>$(TargetDir)Workloads/net8.0/</DestinationFolder>
+      </_WorkloadFiles>
+      <_WorkloadFiles Include="%(_Net10Workload.RootDir)%(_Net10Workload.Directory)*">
+        <DestinationFolder>$(TargetDir)Workloads/net10.0/</DestinationFolder>
+      </_WorkloadFiles>
+    </ItemGroup>
+    <Copy SourceFiles="@(_WorkloadFiles)" DestinationFiles="@(_WorkloadFiles->'%(DestinationFolder)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Exec Condition="'$(OS)' == 'Windows_NT'"
+          Command="dotnet publish &quot;$(MSBuildThisFileDirectory)Workloads/Satori/SatoriInsight.SatoriWorkload.csproj&quot; -c $(Configuration) -r win-x64 --self-contained true -p:UseSatoriGC=true -o &quot;$(TargetDir)Workloads/Satori&quot;" />
+  </Target>
+</Project>
