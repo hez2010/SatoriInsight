@@ -42,13 +42,9 @@ For NativeAOT, also install the Visual Studio C++ desktop build tools and Window
 dotnet publish SatoriInsight/SatoriInsight.csproj -c Release -r win-x64 -p:PublishAot=true -o artifacts/publish-aot
 ```
 
-Keep the published executable and its companion files together.
-
 ## Start profiling
 
-Open the app and choose **Attach process** or **Launch process**. Use **Memory activity** for live measurements and **Heap inspector** for captures. Monitoring continues while you inspect a selected time range or pause the view.
-
-Monitoring can affect target performance. Heap capture can briefly pause the target and use additional memory. Measurements that are unavailable appear as `—`.
+Choose **Attach process** or **Launch process**. Use **Memory activity** for live measurements and **Heap inspector** for captures.
 
 See the [user guide](docs/user-guide.md) for the complete workflow and [troubleshooting](docs/troubleshooting.md) for connection, capture, and recording problems.
 
@@ -58,4 +54,4 @@ See the [user guide](docs/user-guide.md) for the complete workflow and [troubles
 dotnet test SatoriInsight.slnx -c Release
 ```
 
-The feature tests require the .NET 8 and .NET 10 runtimes. They build and launch their own test applications.
+Running the tests requires the .NET 8 and .NET 10 runtimes.

@@ -2,32 +2,32 @@
 
 ## The process is missing from the picker
 
-Confirm the application is running and choose **Refresh**. The picker shows accessible local .NET processes with diagnostics enabled. Ordinary .NET Framework applications and remote processes are not listed.
+Confirm the application is running, has diagnostics enabled, and is accessible to your account. Choose **Refresh** to update the list. Only local .NET processes are listed.
 
-Run the profiler under an account allowed to inspect the target. An application that exits quickly may be easier to record with **Launch process**.
+Use **Launch process** to record an application that exits too quickly to attach to.
 
 ## Launch or connection fails
 
 Check the executable path, arguments, and working directory. For a .NET DLL, confirm `dotnet` is available on PATH and that the required runtime is installed.
 
-Remove environment overrides that disable .NET diagnostics or introduce extra startup suspension. The launch dialog reports invalid environment entries. After a timeout or process exit, refresh the list and retry.
+Remove environment overrides that disable diagnostics or add extra startup suspension. After a timeout or process exit, refresh the list and retry.
 
 ## A measurement or region is unavailable
 
-Different runtimes expose different information. A dash indicates an unavailable measurement. Live generation ranges may appear only after a collection; captures can provide additional details, but some runtimes support region-only captures.
+Available information depends on the target runtime. Live generation ranges may appear only after a collection. Capture the heap for additional details where supported.
 
-If the app reports lost data, treat the affected interval as incomplete. A later collection may restore the region map. Reduce the workload or start a new recording if losses continue.
+If the app reports lost data, the affected interval is incomplete. A later collection may restore the region map. Start another recording if losses continue.
 
 ## Heap capture fails
 
 Use a profiler build matching the target architecture and check inspection permissions. Close unnecessary captures and ensure enough memory and disk space are available.
 
-A matching DAC is required for detailed inspection of supported runtimes. A custom runtime build may require its matching DAC; a DAC from a different runtime build is not interchangeable. Region-only captures may still be available.
+Detailed inspection requires a DAC matching the target runtime build. Region-only captures may still be available without it.
 
 ## A recording will not open
 
-Use a complete, unmodified recording from the current app version. Older recording formats are not converted. A failed import leaves the current recording available.
+Use **Open session** for recordings and **Open dump** for dumps. If a recording is incomplete or invalid, export it again from the original session.
 
 ## The profiler uses increasing memory
 
-Session history is retained until the session is replaced or the app closes. Export the recording when needed, then start a new connection. Remove captured heaps that are no longer needed. Pausing the view does not stop collection.
+Session history grows while recording. Export it before starting another connection, and remove captures you no longer need. **Pause view** does not stop collection; use **Disconnect** to stop recording.
