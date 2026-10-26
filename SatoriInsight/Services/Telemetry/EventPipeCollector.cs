@@ -12,6 +12,7 @@ using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using SatoriInsight.Models;
 using SatoriInsight.Services.Heap;
 using SatoriInsight.Services.Processes;
+using GCSettings = System.Runtime.GCSettings;
 
 namespace SatoriInsight.Services.Telemetry;
 
@@ -205,10 +206,17 @@ public sealed class EventPipeCollector : ILiveTelemetrySession
         var regionsRecognized = false;
         var regionsAttempted = false;
         var gcModeAttempted = false;
+        var selfCollector = Target.ProcessId == Environment.ProcessId ? CurrentCollectorKind() : (GcCollectorKind?)null;
 
         try
         {
             SampleProcessMetrics(processReader);
+
+            if (selfCollector.HasValue)
+            {
+                _buffer.GcMode(CurrentSeconds, selfCollector, GCSettings.LatencyMode);
+            }
+
             PublishFrame();
 
             while (await timer.WaitForNextTickAsync(token).ConfigureAwait(false))
@@ -216,7 +224,11 @@ public sealed class EventPipeCollector : ILiveTelemetrySession
                 SampleProcessMetrics(processReader);
                 SampleRegions(regionReader, ref regionTarget, ref regionsRecognized, ref regionsAttempted, token);
 
-                if (!gcModeAttempted && regionTarget is not null)
+                if (selfCollector.HasValue)
+                {
+                    _buffer.GcMode(CurrentSeconds, selfCollector, GCSettings.LatencyMode);
+                }
+                else if (!gcModeAttempted && regionTarget is not null)
                 {
                     gcModeAttempted = true;
                     SampleGcMode(regionTarget, regionsRecognized);
@@ -319,6 +331,16 @@ public sealed class EventPipeCollector : ILiveTelemetrySession
             target?.Dispose();
             target = null;
         }
+    }
+
+    private static GcCollectorKind CurrentCollectorKind()
+    {
+        if (GC.GetConfigurationVariables().TryGetValue("SatoriGC", out var enabled) && enabled is true)
+        {
+            return GcCollectorKind.Satori;
+        }
+
+        return GCSettings.IsServerGC ? GcCollectorKind.Server : GcCollectorKind.Workstation;
     }
 
     private void SampleGcMode(DataTarget target, bool regionsRecognized)

@@ -22,11 +22,6 @@ public sealed class LocalProcessDiscovery : ILocalProcessDiscovery
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                if (pid == Environment.ProcessId)
-                {
-                    continue;
-                }
-
                 try
                 {
                     using var process = Process.GetProcessById(pid);
