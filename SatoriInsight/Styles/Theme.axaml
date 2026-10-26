@@ -99,6 +99,8 @@
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
     <Style Selector="DataGrid">
+        <Setter Property="CanUserResizeColumns" Value="True" />
+        <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="FocusAdorner" Value="{x:Null}" />
@@ -107,6 +109,9 @@
         <Setter Property="RowHeight" Value="30" />
         <Setter Property="ColumnHeaderHeight" Value="35" />
         <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="DataGrid /template/ ScrollBar#PART_HorizontalScrollbar">
+        <Setter Property="AllowAutoHide" Value="False" />
     </Style>
     <Style Selector="DataGridColumnHeader">
         <Setter Property="Background" Value="#151B26" />

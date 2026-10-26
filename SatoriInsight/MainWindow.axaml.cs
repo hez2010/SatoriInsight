@@ -55,9 +55,15 @@ public partial class MainWindow : FAAppWindow
         _replayTimer.Tick += (_, _) => ViewModel.Tick();
         ViewModel.RefreshRequested += QueueLiveRefresh;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
-        Opened += (_, _) => UpdateReplayTimer();
+        Opened += (_, _) =>
+        {
+            UpdateReplayTimer();
+            _ = CheckForUpdatesAsync();
+        };
         Closed += (_, _) =>
         {
+            _windowLifetime.Cancel();
+            _windowLifetime.Dispose();
             _replayTimer.Stop();
             ViewModel.RefreshRequested -= QueueLiveRefresh;
             ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
@@ -148,7 +154,7 @@ public partial class MainWindow : FAAppWindow
 
         try
         {
-            if (await dialog.ShowAsync(this) == FAContentDialogResult.Primary)
+            if (await ShowDialogAsync(dialog) == FAContentDialogResult.Primary)
             {
                 target = ViewModel.SelectedLocalProcess;
             }
@@ -192,7 +198,7 @@ public partial class MainWindow : FAAppWindow
 
         try
         {
-            result = await dialog.ShowAsync(this);
+            result = await ShowDialogAsync(dialog);
         }
         finally
         {
@@ -240,6 +246,8 @@ public partial class MainWindow : FAAppWindow
 
     private void Window_Closing(object? sender, WindowClosingEventArgs e)
     {
+        _windowLifetime.Cancel();
+
         if (_cleanupComplete)
         {
             return;

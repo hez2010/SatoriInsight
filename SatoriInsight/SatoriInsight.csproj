@@ -17,9 +17,9 @@
     <ApplicationIcon>Assets/SatoriInsight.ico</ApplicationIcon>
     <Title>Satori Insight</Title>
     <Product>Satori Insight</Product>
-    <Version>1.1.0</Version>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
+    <Version>1.1.1</Version>
+    <AssemblyVersion>1.1.1.0</AssemblyVersion>
+    <FileVersion>1.1.1.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,6 +29,7 @@
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.4" />
     <PackageReference Include="Avalonia.Controls.Charts" Version="12.1.1" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Controls.Markdown" Version="12.1.4" />
     <PackageReference Include="FluentAvaloniaUI" Version="3.1.0" />
     <PackageReference Include="Microsoft.Diagnostics.NETCore.Client" Version="0.2.750501" />
     <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.2.8" />

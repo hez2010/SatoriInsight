@@ -237,7 +237,7 @@
                                 </Grid>
                                 <TextBlock IsVisible="{Binding !HasEvents}" Text="{Binding EmptyEventsLabel}" Classes="muted" Margin="12,8" />
                                 <DataGrid Name="EventsGrid" Height="290" ItemsSource="{Binding EventLog}"
-                                    SelectedItem="{Binding SelectedEvent}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeColumns="True"
+                                    SelectedItem="{Binding SelectedEvent}" AutoGenerateColumns="False" IsReadOnly="True"
                                     SelectionMode="Single">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn x:DataType="models:GcEvent" Header="GC #" Binding="{Binding NumberLabel}" SortMemberPath="Number" Width="80" />
@@ -321,7 +321,7 @@
                                     </Grid>
                                 </Border>
                                 <DataGrid IsVisible="{Binding HasEventGenerations}" ItemsSource="{Binding EventGenerations}"
-                                    AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeColumns="True" MaxHeight="220">
+                                    AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="220">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="Generation" Binding="{Binding Generation}" Width="*" />
                                         <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="Before" Binding="{Binding BeforeLabel}" SortMemberPath="BeforeBytes" Width="*" />

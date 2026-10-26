@@ -52,7 +52,7 @@
                             <DataGrid Grid.Row="2" Name="TypesGrid" ItemsSource="{Binding Types}" SelectedItem="{Binding SelectedType}"
                                 IsReadOnly="True" AutoGenerateColumns="False" PointerReleased="Object_Focused" GotFocus="Object_Focused">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn x:DataType="models:TypeStat" Header="Type" Binding="{Binding Name}" Width="*" />
+                                    <DataGridTextColumn x:DataType="models:TypeStat" Header="Type" Binding="{Binding Name}" Width="300" />
                                     <DataGridTextColumn x:DataType="models:TypeStat" Header="Count" Binding="{Binding CountLabel}" SortMemberPath="Count" Width="75" />
                                     <DataGridTextColumn x:DataType="models:TypeStat" Header="Bytes" Binding="{Binding SizeLabel}" SortMemberPath="Bytes" Width="100" />
                                 </DataGrid.Columns>
@@ -69,7 +69,7 @@
                                 PointerReleased="Object_Focused" GotFocus="Object_Focused">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Address" Binding="{Binding AddressLabel}" SortMemberPath="Address" Width="145" />
-                                    <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Type" Binding="{Binding Type}" Width="*" />
+                                    <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Type" Binding="{Binding Type}" Width="300" />
                                     <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Size" Binding="{Binding SizeLabel}" SortMemberPath="Size" Width="90" />
                                     <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Gen" Binding="{Binding GenerationLabel}" SortMemberPath="Generation" Width="70" />
                                 </DataGrid.Columns>
@@ -95,7 +95,7 @@
                             IsReadOnly="True" AutoGenerateColumns="False" DoubleTapped="Reference_DoubleTapped" KeyDown="Reference_KeyDown"
                             ToolTip.Tip="Double-click or press Enter to inspect a referenced object.">
                             <DataGrid.Columns>
-                                <DataGridTextColumn x:DataType="models:ObjectReference" Header="Field / reference" Binding="{Binding Field}" Width="*" />
+                                <DataGridTextColumn x:DataType="models:ObjectReference" Header="Field / reference" Binding="{Binding Field}" Width="240" />
                                 <DataGridTextColumn x:DataType="models:ObjectReference" Header="Address" Binding="{Binding Address, StringFormat=0x{0:X}}" SortMemberPath="Address" Width="155" />
                             </DataGrid.Columns>
                         </DataGrid>
@@ -108,9 +108,9 @@
                             DoubleTapped="RootPath_DoubleTapped" KeyDown="RootPath_KeyDown" ToolTip.Tip="Double-click or press Enter to inspect an object on this path.">
                             <DataGrid.Columns>
                                 <DataGridTextColumn x:DataType="models:RootPathStep" Header="#" Binding="{Binding Depth}" SortMemberPath="Depth" Width="45" />
-                                <DataGridTextColumn x:DataType="models:RootPathStep" Header="Root / reference" Binding="{Binding Link}" Width="*" />
+                                <DataGridTextColumn x:DataType="models:RootPathStep" Header="Root / reference" Binding="{Binding Link}" Width="220" />
                                 <DataGridTextColumn x:DataType="models:RootPathStep" Header="Address" Binding="{Binding AddressLabel}" SortMemberPath="Address" Width="155" />
-                                <DataGridTextColumn x:DataType="models:RootPathStep" Header="Type" Binding="{Binding Type}" Width="*" />
+                                <DataGridTextColumn x:DataType="models:RootPathStep" Header="Type" Binding="{Binding Type}" Width="300" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -134,7 +134,7 @@
                             <DataGrid Grid.Row="4" Name="RegionHolesGrid" IsVisible="{Binding HasObjectCapture}" ItemsSource="{Binding RegionHoles}"
                                 IsReadOnly="True" AutoGenerateColumns="False">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn x:DataType="models:FreeHole" Header="Free hole address" Binding="{Binding AddressLabel}" SortMemberPath="Address" Width="*" />
+                                    <DataGridTextColumn x:DataType="models:FreeHole" Header="Free hole address" Binding="{Binding AddressLabel}" SortMemberPath="Address" Width="200" />
                                     <DataGridTextColumn x:DataType="models:FreeHole" Header="Size" Binding="{Binding SizeLabel}" SortMemberPath="Size" Width="120" />
                                 </DataGrid.Columns>
                             </DataGrid>
@@ -176,7 +176,7 @@
                     <DataGrid Name="TypeDifferencesGrid" IsVisible="{Binding HasComparison}" ItemsSource="{Binding TypeDifferences}"
                         Height="450" IsReadOnly="True" AutoGenerateColumns="False">
                         <DataGrid.Columns>
-                            <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Type" Binding="{Binding Name}" Width="*" />
+                            <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Type" Binding="{Binding Name}" Width="400" />
                             <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Baseline" Binding="{Binding BaselineLabel}" SortMemberPath="BaselineBytes" Width="160" />
                             <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Selected" Binding="{Binding CurrentLabel}" SortMemberPath="CurrentBytes" Width="160" />
                             <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Change" Binding="{Binding DeltaLabel}" SortMemberPath="DeltaBytes" Width="160" />

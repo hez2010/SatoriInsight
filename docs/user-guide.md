@@ -53,3 +53,7 @@ Region-only captures show the map and region details. Keep up to four captures a
 Choose **Export session** to save the complete recording, including captures. Export includes the full session regardless of the timeline selection. Save recordings before starting another connection or closing the app.
 
 Choose **Open session** to reopen a recording, then use playback controls or the timeline to inspect it.
+
+## Updates
+
+Satori Insight checks for updates when it starts. When a newer release is available, it shows the changelog. Choose **View release** to download it or **Not now** to continue working.
