@@ -22,8 +22,6 @@ Download the package for your operating system and architecture from the [latest
 | Linux (glibc) | `SatoriInsight-linux-x64.tar.gz` | `SatoriInsight-linux-arm64.tar.gz` |
 | Linux (musl / Alpine) | `SatoriInsight-linux-musl-x64.tar.gz` | `SatoriInsight-linux-musl-arm64.tar.gz` |
 
-Extract the archive and run `SatoriInsight.exe` on Windows or `SatoriInsight` on macOS and Linux. Keep its companion files together. Release packages are NativeAOT builds and do not require an installed .NET runtime for the profiler itself. Matching `.sha256` files are available to verify each download. Debug symbols are excluded, and macOS builds are not notarized.
-
 ## Build and run
 
 Install the .NET 10 SDK. Building requires an Avalonia Pro Charts license supplied through the `AvaloniaUILicenseKey` environment variable.
