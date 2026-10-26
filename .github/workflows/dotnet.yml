@@ -1,4 +1,4 @@
-name: NativeAOT
+name: .NET
 
 on:
   push:
