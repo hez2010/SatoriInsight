@@ -1,4 +1,4 @@
-# Satori Insight
+<h1><img src="docs/images/app-icon.svg" width="36" height="36" align="middle" alt=""> Satori Insight</h1>
 
 A desktop profiler for exploring local .NET memory and garbage collection.
 
@@ -21,6 +21,23 @@ Download the package for your operating system and architecture from the [latest
 | macOS | `SatoriInsight-osx-x64.tar.gz` | `SatoriInsight-osx-arm64.tar.gz` |
 | Linux (glibc) | `SatoriInsight-linux-x64.tar.gz` | `SatoriInsight-linux-arm64.tar.gz` |
 | Linux (musl / Alpine) | `SatoriInsight-linux-musl-x64.tar.gz` | `SatoriInsight-linux-musl-arm64.tar.gz` |
+
+## Screenshots
+
+![Memory activity with heap metrics, generation sizes, region map, GC pause distribution, and collection timeline](docs/images/memory-activity.png)
+
+<details>
+<summary>GC analysis and heap inspection</summary>
+
+**Collection log and GC details**
+
+![GC pause statistics and timeline above the collection log, with latency modes and before-and-after memory details](docs/images/gc-analysis.png)
+
+**Captured regions and fragmentation**
+
+![Captured heap regions with a selected region's object layout, free space, and objects](docs/images/heap-regions.png)
+
+</details>
 
 ## Build and run
 
