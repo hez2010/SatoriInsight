@@ -12,13 +12,15 @@ After a successful launch, the button becomes a red **Stop process** button. It 
 
 The overview shows heap sizes, allocation rate, generation counts, CPU time, elapsed time, and RSS. RSS includes resident managed and native memory. CPU time includes all threads and can exceed wall-clock time.
 
+The allocation-rate card also shows the highest recorded rate, up to the selected time or within the selected period.
+
 **GC mode** shows the collector and its last reported latency mode. Unavailable values appear as **Unknown**. Selecting a time or period shows the last reported mode at that time or at the end of the period.
 
 The collection log and collection details also show **Latency mode**. A value prefixed with **≈** is the last sampled mode before that collection completed; it may have changed between samples. **—** means the mode is unavailable for that collection.
 
 The collection log includes generation, mode, reason or outcome, duration, pause, and before/after sizes where available. Select a row for more detail. Filter by generation, or click a histogram bar to select collections in a pause interval.
 
-The pause histogram and minimum, p50, p95, p99, p99.9, and maximum describe process-wide GC pauses. Thread-local collections count toward Gen0 activity but do not contribute to that histogram. Collection duration and suspension latency are separate measurements.
+The pause histogram and p50, p90, p95, p99, p99.9, average, minimum, and maximum describe process-wide GC pauses. Thread-local collections count toward Gen0 activity but do not contribute to that histogram. Collection duration and suspension latency are separate measurements.
 
 Generation sizes describe the latest reported measurement and can lag current allocation. A missing value is shown as `—`.
 

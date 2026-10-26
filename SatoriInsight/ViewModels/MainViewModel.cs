@@ -234,6 +234,15 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
 
     public string AllocationTitle => IsPeriodSelected ? "AVG ALLOCATION RATE" : "ALLOCATION RATE";
 
+    public string MaximumAllocationLabel
+    {
+        get
+        {
+            var maximum = History.Where(point => point.Seconds >= WindowStartSeconds && point.Seconds <= SessionSeconds).Max(point => point.AllocationMiB);
+            return maximum is { } value ? $"Recorded maximum: {value:0.0} MiB/s" : "Recorded maximum: —";
+        }
+    }
+
     public string P99Label => !HasPauses ? "—" : $"{GcStatistics.Percentile(Events, 99):0.00}";
 
     public string P99WithUnitsLabel => HasPauses ? $"{P99Label} ms" : "—";
@@ -246,7 +255,11 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
 
     public string P50Label => !HasPauses ? "—" : $"{GcStatistics.Percentile(Events, 50):0.00} ms";
 
+    public string P90Label => !HasPauses ? "—" : $"{GcStatistics.Percentile(Events, 90):0.00} ms";
+
     public string P95Label => !HasPauses ? "—" : $"{GcStatistics.Percentile(Events, 95):0.00} ms";
+
+    public string AveragePauseLabel => !HasPauses ? "—" : $"{PauseEvents.Average(gc => gc.PauseMilliseconds):0.00} ms";
 
     public string PausePercentLabel => GcStatistics.CounterPausePercent(PauseCounters) is { } percent ? $"{percent:0.00}%" : "—";
 
@@ -404,7 +417,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
         Notify(nameof(GcModeLabel), nameof(GcLatencyModeLabel));
         Notify(
             nameof(SessionTime), nameof(SessionSeconds), nameof(WindowStartSeconds), nameof(ChartMaximumSeconds), nameof(ChartStepSeconds), nameof(UsedLabel),
-            nameof(CommittedLabel), nameof(AllocationLabel), nameof(P99Label), nameof(P999Label), nameof(MinPauseLabel), nameof(MaxPauseLabel), nameof(P50Label), nameof(P95Label),
+            nameof(CommittedLabel), nameof(AllocationLabel), nameof(MaximumAllocationLabel), nameof(P99Label), nameof(P999Label), nameof(MinPauseLabel), nameof(MaxPauseLabel),
+            nameof(P50Label), nameof(P90Label), nameof(P95Label), nameof(AveragePauseLabel),
             nameof(PausePercentLabel), nameof(GcCountLabel), nameof(PauseCountLabel), nameof(Events), nameof(History), nameof(Histogram),
             nameof(HistogramMaximumCount), nameof(HistogramCountStep), nameof(HasPauses), nameof(P99WithUnitsLabel), nameof(PauseCounters),
             nameof(HasSessionData), nameof(HasCollectedData), nameof(CanPause), nameof(HasHistory), nameof(EmptyHistoryLabel), nameof(EmptyEventsLabel),

@@ -160,6 +160,7 @@
                                     <TextBlock Text="{Binding AllocationLabel}" FontSize="25" FontWeight="SemiBold" />
                                     <TextBlock Text="MiB/s" Classes="muted" VerticalAlignment="Bottom" Margin="0,0,0,4" />
                                 </StackPanel>
+                                <TextBlock Text="{Binding MaximumAllocationLabel}" Classes="muted" FontSize="11" />
                             </StackPanel>
                         </Border>
                         <Border Grid.Column="2" Classes="panel" Padding="17,14">
