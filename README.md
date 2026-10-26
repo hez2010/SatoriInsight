@@ -9,7 +9,7 @@ A desktop profiler for exploring local .NET memory and garbage collection.
 - Launch an application with custom arguments and environment variables, or attach to a running process.
 - Save recordings and reopen them for offline analysis.
 
-Windows x64 is the tested platform, with .NET 8 and .NET 10 targets. Available measurements depend on the target runtime. Remote processes and ordinary .NET Framework applications are not supported.
+Available measurements depend on the target runtime. Remote processes and ordinary .NET Framework applications are not supported.
 
 ## Download
 
