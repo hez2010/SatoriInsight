@@ -115,6 +115,7 @@ jobs:
         env:
           AvaloniaUILicenseKey: ${{ secrets.AVALONIA_UI_LICENSE_KEY }}
         run: |
+          mkdir -p "artifacts/publish/$RID" artifacts/packages
           docker run --rm \
             --env AvaloniaUILicenseKey \
             --env DOTNET_NOLOGO=true \
