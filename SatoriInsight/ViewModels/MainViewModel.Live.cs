@@ -28,7 +28,6 @@ public sealed partial class MainViewModel
     private LocalDotNetProcess? _selectedLocalProcess;
     private IReadOnlyList<LocalDotNetProcess> _localProcesses = [];
     private readonly BulkObservableCollection<LocalDotNetProcess> _visibleProcesses = [];
-    private bool _updatingProcessList;
     private string _processSearch = "";
     private string _processDiscoveryStatus = "";
 
@@ -182,7 +181,7 @@ public sealed partial class MainViewModel
         get => _selectedLocalProcess;
         set
         {
-            if (!_updatingProcessList && Set(ref _selectedLocalProcess, value))
+            if (Set(ref _selectedLocalProcess, value))
             {
                 Notify(nameof(CanAttach));
             }
@@ -212,17 +211,9 @@ public sealed partial class MainViewModel
             || process.ProcessId.ToString(CultureInfo.InvariantCulture).Contains(search, StringComparison.Ordinal)).ToArray();
         var selected = SelectedLocalProcess is { } prior ? visible.FirstOrDefault(process => process.ProcessId == prior.ProcessId
             && process.StartTimeUtc == prior.StartTimeUtc) : null;
-        _updatingProcessList = true;
-
-        try
-        {
-            _visibleProcesses.ReplaceAll(visible);
-        }
-        finally
-        {
-            _updatingProcessList = false;
-        }
-
+        // Let the grid's reset update the bound selection before restoring it.
+        // Ignoring those writes can leave its selected row out of sync with CanAttach.
+        _visibleProcesses.ReplaceAll(visible);
         SelectedLocalProcess = selected;
         Notify(nameof(SelectedLocalProcess), nameof(ProcessCountLabel));
     }

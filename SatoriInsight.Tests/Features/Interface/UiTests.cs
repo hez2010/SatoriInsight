@@ -44,9 +44,9 @@ public class UiTests
             Assert.False(window.FindControl<Button>("ExportButton")!.IsEnabled);
             SaveFrame(window, Path.Combine(output, "disconnected-preview.png"));
             Click(window, window.FindControl<Button>("ConnectButton")!);
-            await Until(() => window.GetVisualDescendants().OfType<ProcessPickerView>().Any()
+            await Until(() => window.GetVisualDescendants().OfType<ProcessPickerDialog>().Any()
                 && window.ViewModel.LocalProcesses.Any(process => process.ProcessId == target.Process.Id));
-            var picker = window.GetVisualDescendants().OfType<ProcessPickerView>().Single();
+            var picker = window.GetVisualDescendants().OfType<ProcessPickerDialog>().Single();
             window.ViewModel.ProcessSearch = target.Process.Id.ToString();
             picker.FindControl<DataGrid>("ProcessGrid")!.SelectedItem = window.ViewModel.LocalProcesses.Single();
             Assert.True(window.ViewModel.CanAttach);
@@ -182,6 +182,29 @@ public class UiTests
             window.ViewModel.InspectionTab = 0;
             using var saved = new MemoryStream();
             await window.ViewModel.ExportSessionAsync(saved);
+
+            using var nextTarget = await TestWorkload.StartAsync("net10.0");
+            await target.Process.StandardInput.WriteLineAsync("exit");
+            await Until(() => !window.ViewModel.IsConnected);
+            Assert.Contains("exited", window.ViewModel.Status);
+            Click(window, window.FindControl<Button>("ConnectButton")!);
+            await Until(() => !window.ViewModel.IsRefreshingProcesses &&
+                window.GetVisualDescendants().OfType<ProcessPickerDialog>().Any());
+            window.ViewModel.ProcessSearch = nextTarget.Process.Id.ToString();
+            window.UpdateLayout();
+            var nextPicker = window.GetVisualDescendants().OfType<ProcessPickerDialog>().Single();
+            var nextRow = nextPicker.GetVisualDescendants().OfType<TextBlock>().Single(text =>
+                text.Classes.Contains("process-name") && text.IsEffectivelyVisible &&
+                text.DataContext is Models.LocalDotNetProcess process && process.ProcessId == nextTarget.Process.Id);
+            Click(window, nextRow);
+            Assert.Equal(nextTarget.Process.Id, window.ViewModel.SelectedLocalProcess?.ProcessId);
+            var reconnect = window.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Connect"));
+            Assert.True(reconnect.IsEffectivelyEnabled);
+            Click(window, reconnect);
+            await Until(() => window.ViewModel.IsConnected && window.ViewModel.ActiveProcess?.ProcessId == nextTarget.Process.Id);
+            await nextTarget.Process.StandardInput.WriteLineAsync("gc");
+            await Until(() => window.ViewModel.Events.Count > 0);
+
             await window.ViewModel.DisconnectAsync();
             Assert.False(window.ViewModel.IsConnected);
             Assert.True(window.ViewModel.HasSessionData);

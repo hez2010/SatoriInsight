@@ -1,6 +1,12 @@
-<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:vm="using:SatoriInsight.ViewModels"
-    x:DataType="vm:LaunchProcessViewModel" x:Class="SatoriInsight.Controls.LaunchProcessView" Width="640">
-    <StackPanel Spacing="14">
+<fa:FAContentDialog xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:fa="using:FluentAvalonia.UI.Controls"
+    xmlns:vm="using:SatoriInsight.ViewModels" x:DataType="vm:LaunchProcessViewModel" x:Class="SatoriInsight.Controls.LaunchProcessDialog"
+    Title="Launch process" PrimaryButtonText="Launch" CloseButtonText="Cancel" IsPrimaryButtonEnabled="{Binding CanLaunch}"
+    PrimaryButtonClick="Launch_Click">
+    <fa:FAContentDialog.Resources>
+        <x:Double x:Key="ContentDialogMinWidth">680</x:Double>
+        <x:Double x:Key="ContentDialogMaxWidth">760</x:Double>
+    </fa:FAContentDialog.Resources>
+    <StackPanel Spacing="14" Width="640">
         <StackPanel Spacing="6">
             <TextBlock Text="Application" />
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
@@ -31,4 +37,4 @@
         <TextBlock Text="Disconnecting leaves the application running." Classes="muted" FontSize="11" />
         <TextBlock Name="LaunchError" Text="{Binding Error}" IsVisible="{Binding HasError}" Foreground="#F29A91" TextWrapping="Wrap" />
     </StackPanel>
-</UserControl>
+</fa:FAContentDialog>

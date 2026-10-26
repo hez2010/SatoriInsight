@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -140,25 +139,30 @@ public partial class MainWindow : FAAppWindow
             return;
         }
 
-        var dialog = new FAContentDialog
+        var dialog = new ProcessPickerDialog
         {
-            DataContext = ViewModel,
-            Title = "Select a local .NET process",
-            PrimaryButtonText = "Connect",
-            CloseButtonText = "Cancel",
-            Content = new ProcessPickerView
-            {
-                DataContext = ViewModel
-            }
+            DataContext = ViewModel
         };
-        dialog.Resources["ContentDialogMinWidth"] = 680d;
-        dialog.Resources["ContentDialogMaxWidth"] = 760d;
-        dialog.Bind(FAContentDialog.IsPrimaryButtonEnabledProperty, CompiledBinding.Create((MainViewModel model) => model.CanAttach));
         var refresh = ViewModel.RefreshProcessesAsync();
-        var result = await dialog.ShowAsync(this);
+        LocalDotNetProcess? target = null;
+
+        try
+        {
+            if (await dialog.ShowAsync(this) == FAContentDialogResult.Primary)
+            {
+                target = ViewModel.SelectedLocalProcess;
+            }
+        }
+        finally
+        {
+            // A detached grid still observes the shared process list and can clear
+            // the next picker's selection when that list refreshes.
+            dialog.DataContext = null;
+        }
+
         await refresh;
 
-        if (result == FAContentDialogResult.Primary && ViewModel.SelectedLocalProcess is { } target)
+        if (target is not null)
         {
             await ViewModel.AttachAsync(target);
         }
@@ -180,28 +184,22 @@ public partial class MainWindow : FAAppWindow
         }
 
         _launchSettings.Error = "";
-        ProcessLaunchOptions? options = null;
-        var dialog = new FAContentDialog
+        var dialog = new LaunchProcessDialog
         {
-            DataContext = _launchSettings,
-            Title = "Launch process",
-            PrimaryButtonText = "Launch",
-            CloseButtonText = "Cancel",
-            Content = new LaunchProcessView
-            {
-                DataContext = _launchSettings
-            }
+            DataContext = _launchSettings
         };
-        dialog.Resources["ContentDialogMinWidth"] = 680d;
-        dialog.Resources["ContentDialogMaxWidth"] = 760d;
-        dialog.Bind(FAContentDialog.IsPrimaryButtonEnabledProperty, CompiledBinding.Create((LaunchProcessViewModel model) => model.CanLaunch));
-        dialog.PrimaryButtonClick += (_, args) =>
-        {
-            options = _launchSettings.CreateOptions();
-            args.Cancel = options is null;
-        };
+        FAContentDialogResult result;
 
-        if (await dialog.ShowAsync(this) == FAContentDialogResult.Primary && options is not null)
+        try
+        {
+            result = await dialog.ShowAsync(this);
+        }
+        finally
+        {
+            dialog.DataContext = null;
+        }
+
+        if (result == FAContentDialogResult.Primary && dialog.Options is { } options)
         {
             await ViewModel.LaunchAsync(options);
         }
