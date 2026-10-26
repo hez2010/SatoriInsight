@@ -22,7 +22,8 @@
                             <Border Width="160" Height="10" Background="{Binding ColorGradient}" VerticalAlignment="Center" />
                             <TextBlock Text="100%" Classes="muted" FontSize="11" VerticalAlignment="Center" />
                         </StackPanel>
-                        <ScrollViewer Grid.Column="1" MaxHeight="68" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer Grid.Column="1" Name="ColorLegendScroller" MaxHeight="68" Padding="0,0,14,0"
+                            HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" AllowAutoHide="False">
                             <ItemsControl ItemsSource="{Binding ColorLegend}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>

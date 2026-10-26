@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:vm="using:SatoriInsight.ViewModels"
     xmlns:local="using:SatoriInsight.Controls" x:DataType="vm:RegionMapViewModel" x:Class="SatoriInsight.Controls.CapturedRegionPicker">
     <Border Classes="panel" Padding="12" ClipToBounds="True">
-        <Grid RowDefinitions="Auto,36,120" RowSpacing="8">
+        <Grid RowDefinitions="Auto,Auto,120" RowSpacing="8">
             <Grid ColumnDefinitions="*,120,70" ColumnSpacing="8">
                 <TextBlock Text="{Binding MapSourceLabel}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                 <ComboBox Grid.Column="1" ItemsSource="{Binding ColorOptions}" SelectedIndex="{Binding ColorIndex}" ToolTip.Tip="Region color" />
@@ -14,7 +14,8 @@
                     <Border Width="140" Height="10" Background="{Binding ColorGradient}" VerticalAlignment="Center" />
                     <TextBlock Text="100%" Classes="muted" FontSize="10" />
                 </StackPanel>
-                <ScrollViewer IsVisible="{Binding !HasColorGradient}" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <ScrollViewer Name="ColorLegendScroller" IsVisible="{Binding !HasColorGradient}" MaxHeight="68" Padding="0,0,14,0"
+                    HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" AllowAutoHide="False">
                     <ItemsControl ItemsSource="{Binding ColorLegend}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>

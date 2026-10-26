@@ -9,7 +9,7 @@ namespace SatoriInsight.Services.Heap;
 /// <summary>
 /// Reads only page maps and headers, without constructing ClrRuntime or loading a DAC.
 /// Layout facts are defined by SatoriPage, SatoriRegion, SatoriQueue, SatoriHeap, SatoriAllocator and SatoriRecycler.
-/// The current layout is compiler-verified against source revision 11290f7f407ae87309dbdcb75e5937c10c3b7186.
+/// The x64 and ARM64 layouts are compiler-verified against source revision 2e8439c701c7502aa45e326202fdb2403d4ae1d0.
 /// Each pass validates address geometry and independently rereads mutable metadata.
 /// </summary>
 public sealed class SatoriRegionReader
@@ -195,6 +195,8 @@ public sealed class SatoriRegionReader
                     return existing;
                 }
 
+                // Regions point to the individual queue shard, whose QueueKind stays
+                // at offset zero, rather than to the SatoriShardedRegionQueue wrapper.
                 var bytes = new byte[4];
                 var value = pointer % 8 == 0 && Read(pointer, bytes) ? I32(bytes, 0) : -1;
                 return queues[pointer] = value is >= 0 and <= 16 ? (RegionQueueKind)value : null;
