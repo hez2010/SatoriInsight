@@ -18,13 +18,12 @@ public sealed class SatoriRegionReader
     public const ulong RegionSize = 1UL << 21;
     public const ulong FirstObjectOffset = 36888;
     private const int HeaderSize = 256;
+    private const int HeaderReadAttempts = 3;
     private const int MaxRegions = 65536;
     private const long ByteBudget = 16 * 1024 * 1024;
 
     private const int UsedOffset = 88;
     private const int CommittedOffset = 96;
-    private const int PreviousOffset = 144;
-    private const int NextOffset = 152;
     private const int QueueOffset = 160;
     private const int OccupancyOffset = 168;
     private const int ObjectCountOffset = 220;
@@ -41,6 +40,7 @@ public sealed class SatoriRegionReader
         long readBytes = 0;
         var pages = new List<Page>();
         var regions = new List<Region>();
+        var queues = new Dictionary<ulong, RegionQueueKind>();
         var skipped = 0;
         var complete = true;
         GCLatencyMode? latencyMode = null;
@@ -60,6 +60,79 @@ public sealed class SatoriRegionReader
 
         RegionReadResult Result(bool recognized, HeapRegion[] output, string? error = null) => new(
             recognized, output, skipped, complete && error is null, readBytes, watch.Elapsed.TotalMilliseconds, error, latencyMode);
+
+        RegionQueueKind? Queue(ulong pointer)
+        {
+            if (pointer == 0 || pointer % 8 != 0)
+            {
+                return null;
+            }
+
+            if (queues.TryGetValue(pointer, out var existing))
+            {
+                return existing;
+            }
+
+            // Regions point to a queue shard, whose immutable QueueKind is at offset zero.
+            Span<byte> bytes = stackalloc byte[4];
+
+            if (!Read(pointer, bytes))
+            {
+                return null;
+            }
+
+            var value = BinaryPrimitives.ReadInt32LittleEndian(bytes);
+            return value is >= 0 and <= 16 ? queues[pointer] = (RegionQueueKind)value : null;
+        }
+
+        bool Fits(Page page, ulong address, byte[] header)
+        {
+            var end = U64(header, 24);
+            var used = U64(header, UsedOffset);
+            var committed = U64(header, CommittedOffset);
+            var allocationStart = U64(header, 64);
+            var allocationEnd = U64(header, 72);
+            var queue = U64(header, QueueOffset);
+
+            if (U64(header, 32) != page.Address || end <= address || end > page.End || (end - address) % RegionSize != 0
+                || I32(header, 16) is < -1 or > 3)
+            {
+                return false;
+            }
+
+            if (used < address + FirstObjectOffset - 8 || used > committed || committed > end || committed % 4096 != 0
+                || U64(header, OccupancyOffset) > end - address - FirstObjectOffset
+                || I32(header, ObjectCountOffset) < 0 || header[PinnedOffset] > 1 || header[40] > 2)
+            {
+                return false;
+            }
+
+            if ((allocationStart != 0 || allocationEnd != 0)
+                && (allocationStart < address + FirstObjectOffset || allocationStart > allocationEnd || allocationEnd > end))
+            {
+                return false;
+            }
+
+            // Queue neighbors may be changing or unreadable independently. They are
+            // not needed to identify this region or interpret its displayed metadata.
+            return queue == 0 || Queue(queue).HasValue;
+        }
+
+        byte[]? ReadHeader(Page page, ulong address)
+        {
+            var header = new byte[HeaderSize];
+            var repeated = new byte[HeaderSize];
+
+            for (var attempt = 0; attempt < HeaderReadAttempts; attempt++)
+            {
+                if (Read(address, header) && Read(address, repeated) && SameMetadata(header, repeated) && Fits(page, address, header))
+                {
+                    return header;
+                }
+            }
+
+            return null;
+        }
 
         if (memory.PointerSize != 8)
         {
@@ -154,12 +227,9 @@ public sealed class SatoriRegionReader
                         }
 
                         var address = candidate + (ulong)i * RegionSize;
-                        var bytes = new byte[HeaderSize];
-                        var again = new byte[HeaderSize];
+                        var bytes = ReadHeader(page, address);
 
-                        if (!Read(address, bytes) || !Read(address, again) || !bytes.AsSpan().SequenceEqual(again) || U64(bytes, 32) != candidate
-                            || U64(bytes, 24) <= address || U64(bytes, 24) > pageEnd || (U64(bytes, 24) - address) % RegionSize != 0
-                            || I32(bytes, 16) is < -1 or > 3)
+                        if (bytes is null)
                         {
                             complete = false;
                             skipped++;
@@ -181,130 +251,66 @@ public sealed class SatoriRegionReader
                 return Result(true, [], "Could not read the region data. Try capturing again.");
             }
 
-            var addresses = regions.Select(r => r.Address).ToHashSet();
-            var queues = new Dictionary<ulong, RegionQueueKind?>();
-            RegionQueueKind? Queue(ulong pointer)
-            {
-                if (pointer == 0)
-                {
-                    return null;
-                }
-
-                if (queues.TryGetValue(pointer, out var existing))
-                {
-                    return existing;
-                }
-
-                // Regions point to the individual queue shard, whose QueueKind stays
-                // at offset zero, rather than to the SatoriShardedRegionQueue wrapper.
-                var bytes = new byte[4];
-                var value = pointer % 8 == 0 && Read(pointer, bytes) ? I32(bytes, 0) : -1;
-                return queues[pointer] = value is >= 0 and <= 16 ? (RegionQueueKind)value : null;
-            }
-
-            bool Fits(Region region)
-            {
-                var h = region.Header;
-                var end = U64(h, 24);
-                var used = U64(h, UsedOffset);
-                var committed = U64(h, CommittedOffset);
-                var occupancy = U64(h, OccupancyOffset);
-                var previous = U64(h, PreviousOffset);
-                var next = U64(h, NextOffset);
-                var queue = U64(h, QueueOffset);
-                var allocationStart = U64(h, 64);
-                var allocationEnd = U64(h, 72);
-                return used >= region.Address + FirstObjectOffset - 8 && used <= committed && committed <= end && committed % 4096 == 0
-                    && occupancy <= end - region.Address - FirstObjectOffset && I32(h, ObjectCountOffset) >= 0 && h[PinnedOffset] <= 1 && h[40] <= 2
-                    && (allocationStart == 0
-                    && allocationEnd == 0 || allocationStart >= region.Address + FirstObjectOffset
-                    && allocationStart <= allocationEnd && allocationEnd <= end) && (previous == 0
-                    || addresses.Contains(previous)) && (next == 0
-                    || addresses.Contains(next)) && (queue == 0
-                    || !addresses.Contains(queue & ~(RegionSize - 1))
-                    && Queue(queue).HasValue);
-            }
-
-            var valid = regions.Where(Fits).ToArray();
-
-            if (valid.Length * 10 < regions.Count * 9)
-            {
-                return Result(true, [], "The region format could not be recognized.");
-            }
-
-            skipped += regions.Count - valid.Length;
-            complete &= valid.Length == regions.Count;
-            // Drop a whole page if its region map changed during traversal. Incomplete
-            // passes never remove previously observed regions from the live topology.
+            // Validate each region against the final map. A split elsewhere on the
+            // page must not discard unrelated regions. Partial passes retain old data.
             var stablePages = new HashSet<ulong>();
+            var pageRegions = regions.ToLookup(region => region.Page.Address);
+            var output = new List<HeapRegion>();
 
             foreach (var page in pages)
             {
                 var bitmap = new byte[page.Bitmap.Length];
                 var header = new byte[64];
+                var members = pageRegions[page.Address];
 
-                if (Read(page.Map, bitmap) && bitmap.AsSpan().SequenceEqual(page.Bitmap) && Read(page.Address, header)
-                    && header.AsSpan(8).SequenceEqual(page.Header.AsSpan(8)))
-                {
-                    var members = valid.Where(r => r.Page.Address == page.Address).OrderBy(r => r.Address).ToArray();
-                    var boundary = page.First;
-                    var overlaps = false;
-
-                    foreach (var member in members)
-                    {
-                        if (member.Address < boundary)
-                        {
-                            overlaps = true;
-                            break;
-                        }
-
-                        if (member.Address != boundary)
-                        {
-                            complete = false;
-                        }
-
-                        boundary = U64(member.Header, 24);
-                    }
-
-                    if (boundary != page.End)
-                    {
-                        complete = false;
-                    }
-
-                    if (!overlaps)
-                    {
-                        stablePages.Add(page.Address);
-                    }
-                    else
-                    {
-                        complete = false;
-                    }
-                }
-                else
+                if (!Read(page.Map, bitmap) || !Read(page.Address, header) || !header.AsSpan(8).SequenceEqual(page.Header.AsSpan(8)))
                 {
                     complete = false;
-                }
-            }
-
-            var output = new List<HeapRegion>();
-
-            foreach (var r in valid)
-            {
-                if (!stablePages.Contains(r.Page.Address))
-                {
-                    skipped++;
+                    skipped += members.Count();
                     continue;
                 }
 
-                var h = r.Header;
-                var generation = I32(h, 16);
-                var end = U64(h, 24);
-                var committed = U64(h, CommittedOffset);
-                var header = new RegionHeaderInfo(
-                    r.Page.Address, r.Page.End, generation, Queue(U64(h, QueueOffset)), (RegionReuseLevel)h[40], U64(h, UsedOffset), committed, U64(h, 64), U64(h, 72),
-                    (long)U64(h, OccupancyOffset), I32(h, ObjectCountOffset), h[PinnedOffset] != 0);
-                output.Add(new(output.Count, -1, r.Address, (long)(end - committed), (long)(committed - r.Address), 0, 0,
-                    header.HeapGeneration, 0, 0, [], false, end, Kind: "Region", RuntimeId: -1, Header: header));
+                stablePages.Add(page.Address);
+                complete &= bitmap.AsSpan().SequenceEqual(page.Bitmap);
+                var boundary = page.First;
+                var geometry = new byte[16];
+
+                foreach (var region in members)
+                {
+                    var h = region.Header;
+                    var end = U64(h, 24);
+                    var firstIndex = (int)((region.Address - page.Address) / RegionSize);
+                    var endIndex = (int)((end - page.Address) / RegionSize);
+                    var range = bitmap.AsSpan(firstIndex, endIndex - firstIndex);
+
+                    if (region.Address < boundary || range[0] != 1 || range[1..].Contains((byte)1) || range.Contains((byte)0)
+                        || !range.SequenceEqual(page.Bitmap.AsSpan(firstIndex, range.Length))
+                        || (endIndex < bitmap.Length && bitmap[endIndex] != 1)
+                        || !Read(region.Address + 24, geometry) || !geometry.AsSpan().SequenceEqual(h.AsSpan(24, geometry.Length)))
+                    {
+                        complete = false;
+                        skipped++;
+                        continue;
+                    }
+
+                    complete &= region.Address == boundary;
+                    boundary = end;
+
+                    var generation = I32(h, 16);
+                    var committed = U64(h, CommittedOffset);
+                    var metadata = new RegionHeaderInfo(
+                        page.Address, page.End, generation, Queue(U64(h, QueueOffset)), (RegionReuseLevel)h[40], U64(h, UsedOffset), committed, U64(h, 64), U64(h, 72),
+                        (long)U64(h, OccupancyOffset), I32(h, ObjectCountOffset), h[PinnedOffset] != 0);
+                    output.Add(new(output.Count, -1, region.Address, (long)(end - committed), (long)(committed - region.Address), 0, 0,
+                        metadata.HeapGeneration, 0, 0, [], false, end, Kind: "Region", RuntimeId: -1, Header: metadata));
+                }
+
+                complete &= boundary == page.End;
+            }
+
+            if (output.Count == 0)
+            {
+                return Result(true, [], "No stable region data was available. Try again.");
             }
 
             if (pages.FirstOrDefault(page => stablePages.Contains(page.Address)) is { } stablePage)
@@ -342,6 +348,17 @@ public sealed class SatoriRegionReader
     }
 
     private sealed class SamplingBudgetException : Exception;
+
+    // Compare only the fields displayed or validated above. Queue links, allocation
+    // counters, locks, and other collector bookkeeping can change independently.
+    private static bool SameMetadata(byte[] first, byte[] second) =>
+        first.AsSpan(16, 4).SequenceEqual(second.AsSpan(16, 4))
+        && first.AsSpan(24, 17).SequenceEqual(second.AsSpan(24, 17))
+        && first.AsSpan(64, 16).SequenceEqual(second.AsSpan(64, 16))
+        && first.AsSpan(UsedOffset, 16).SequenceEqual(second.AsSpan(UsedOffset, 16))
+        && first.AsSpan(QueueOffset, 16).SequenceEqual(second.AsSpan(QueueOffset, 16))
+        && first.AsSpan(ObjectCountOffset, 4).SequenceEqual(second.AsSpan(ObjectCountOffset, 4))
+        && first[PinnedOffset] == second[PinnedOffset];
 
     private static ulong U64(byte[] data, int offset) => BinaryPrimitives.ReadUInt64LittleEndian(data.AsSpan(offset));
 
