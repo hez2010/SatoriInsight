@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <Sdk Name="PublishWithSatoriGC" Version="10.0.14-satori.40094043612.1" />
+  <Sdk Name="PublishWithSatoriGC" Version="10.0.14-satori.40308415116.1" />
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
