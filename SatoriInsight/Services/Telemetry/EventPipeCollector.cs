@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.Globalization;
+using System.Runtime;
 using Microsoft.Diagnostics.NETCore.Client;
 using Microsoft.Diagnostics.Runtime;
 using Microsoft.Diagnostics.Tracing;
@@ -203,6 +204,7 @@ public sealed class EventPipeCollector : ILiveTelemetrySession
         DataTarget? regionTarget = null;
         var regionsRecognized = false;
         var regionsAttempted = false;
+        var gcModeAttempted = false;
 
         try
         {
@@ -213,6 +215,13 @@ public sealed class EventPipeCollector : ILiveTelemetrySession
             {
                 SampleProcessMetrics(processReader);
                 SampleRegions(regionReader, ref regionTarget, ref regionsRecognized, ref regionsAttempted, token);
+
+                if (!gcModeAttempted && regionTarget is not null)
+                {
+                    gcModeAttempted = true;
+                    SampleGcMode(regionTarget, regionsRecognized);
+                }
+
                 PublishFrame();
             }
         }
@@ -274,6 +283,11 @@ public sealed class EventPipeCollector : ILiveTelemetrySession
             recognized |= sample.Recognized;
             attempted = true;
 
+            if (sample.Recognized)
+            {
+                _buffer.GcMode(CurrentSeconds, GcCollectorKind.Satori, sample.LatencyMode);
+            }
+
             if (recognized || Volatile.Read(ref _threadLocalObserved) != 0)
             {
                 if (!sample.Recognized && sample.Error is null)
@@ -304,6 +318,37 @@ public sealed class EventPipeCollector : ILiveTelemetrySession
 
             target?.Dispose();
             target = null;
+        }
+    }
+
+    private void SampleGcMode(DataTarget target, bool regionsRecognized)
+    {
+        // A custom collector can report either server value. Identify it first.
+        if (regionsRecognized || Volatile.Read(ref _threadLocalObserved) != 0)
+        {
+            _buffer.GcMode(CurrentSeconds, GcCollectorKind.Satori);
+            return;
+        }
+
+        try
+        {
+            if (target.ClrVersions.Length != 1)
+            {
+                return;
+            }
+
+            using var runtime = target.ClrVersions[0].CreateRuntime();
+            var kind = runtime.Heap.IsServer ? GcCollectorKind.Server : GcCollectorKind.Workstation;
+
+            if (Volatile.Read(ref _threadLocalObserved) == 0)
+            {
+                _buffer.GcMode(CurrentSeconds, kind);
+            }
+        }
+        catch (Exception)
+        {
+            // A missing DAC or inaccessible heap leaves the collector unknown.
+            // This optional metadata lookup must not interrupt event collection.
         }
     }
 
@@ -390,14 +435,27 @@ public sealed class EventPipeCollector : ILiveTelemetrySession
                 data.EventData(payload, 0, 0, payload.Length);
                 var collection = ThreadLocalGcParser.Parse(payload, data.Version, data.TimeStampRelativeMSec / 1000, data.ThreadID);
 
-                if (collection is not null)
+                if (collection is not null && Interlocked.Exchange(ref _threadLocalObserved, 1) == 0)
                 {
-                    Volatile.Write(ref _threadLocalObserved, 1);
+                    _buffer.GcMode(collection.EndSeconds, GcCollectorKind.Satori);
                 }
 
                 _buffer.ThreadLocalCollection(collection);
             };
-            source.Clr.GCGlobalHeapHistory += data => _buffer.HeapCount(data.NumHeaps);
+            source.Clr.GCGlobalHeapHistory += data =>
+            {
+                if (data.ProcessID != Target.ProcessId)
+                {
+                    return;
+                }
+
+                _buffer.HeapCount(data.NumHeaps);
+
+                if (data.HasPauseMode && Enum.IsDefined((GCLatencyMode)data.PauseMode))
+                {
+                    _buffer.GcMode(data.TimeStampRelativeMSec / 1000, latencyMode: (GCLatencyMode)data.PauseMode);
+                }
+            };
             source.Clr.GCCreateSegment += data => _buffer.SegmentCreated(
                 data.ClrInstanceID, data.Address, data.Size, (int)data.Type, data.TimeStampRelativeMSec / 1000);
             source.Clr.GCFreeSegment += data => _buffer.SegmentFreed(data.ClrInstanceID, unchecked((ulong)data.Address), data.TimeStampRelativeMSec / 1000);

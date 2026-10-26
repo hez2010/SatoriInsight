@@ -85,7 +85,7 @@ public sealed partial class MainViewModel
             {
                 LastCounterSeconds = last?.Seconds
             }
-            : null, source.PauseCounters, source.Topology, ProcessHistory: source.ProcessHistory);
+            : null, source.PauseCounters, source.Topology, ProcessHistory: source.ProcessHistory, GcModes: source.GcModes);
 
         if (SelectedEvent is { } selected && (selected.EndSeconds > _selectedTime || selected.EndSeconds < WindowStartSeconds))
         {
@@ -132,6 +132,6 @@ public sealed partial class MainViewModel
         return new(
             session.SessionSeconds, session.Regions, session.Collections, session.Metrics,
             session.HeapMetrics?.AllocationBytesPerSecond / 1048576 ?? session.Metrics.LastOrDefault()?.AllocationMiB, session.HeapMetrics, session.Health,
-            session.PauseCounters, session.Topology, session.GcCounts, session.ProcessMetrics);
+            session.PauseCounters, session.Topology, session.GcCounts, session.ProcessMetrics, session.GcModes);
     }
 }

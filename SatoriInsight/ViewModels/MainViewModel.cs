@@ -160,10 +160,10 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
         }
     }
 
-    public bool HasSessionData => _frame.History.Count > 0 || _frame.Events.Count > 0 || _frame.ProcessHistory?.Count > 0 || Snapshots.Count > 0;
+    public bool HasSessionData => _frame.History.Count > 0 || _frame.Events.Count > 0 || _frame.ProcessHistory?.Count > 0 || _frame.GcModes?.Count > 0 || Snapshots.Count > 0;
 
     public bool HasCollectedData => HasSessionData || _latestLiveFrame is { } latest &&
-        (latest.History.Count > 0 || latest.Events.Count > 0 || latest.ProcessHistory?.Count > 0);
+        (latest.History.Count > 0 || latest.Events.Count > 0 || latest.ProcessHistory?.Count > 0 || latest.GcModes?.Count > 0);
 
     public bool CanPause => !IsReplay && ActiveProcess is not null && (IsConnected || HasCollectedData);
 
@@ -335,7 +335,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
             _replay?.Metrics ?? frame.History.ToArray(), _replay?.Collections ?? frame.Events.ToArray(), _replay?.HeapMetrics ?? frame.Metrics,
             _replay?.Health ?? frame.Health, _replay?.PauseCounters ?? frame.PauseCounters?.ToArray() ?? [], _replay?.Regions ?? frame.Regions.ToArray(),
             Snapshots.ToArray(), _replay?.Topology ?? frame.Topology, _replay?.GcCounts ?? frame.GcCounts,
-            _replay?.ProcessMetrics ?? frame.ProcessHistory?.ToArray() ?? []);
+            _replay?.ProcessMetrics ?? frame.ProcessHistory?.ToArray() ?? [], _replay?.GcModes ?? frame.GcModes?.ToArray() ?? []);
     }
 
     public string ExportJson() => SessionStorage.Write(SessionForExport());
@@ -397,6 +397,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
 
         RefreshEventLog();
         NotifyProcessMetrics();
+        Notify(nameof(GcModeLabel), nameof(GcLatencyModeLabel));
         Notify(
             nameof(SessionTime), nameof(SessionSeconds), nameof(WindowStartSeconds), nameof(ChartMaximumSeconds), nameof(ChartStepSeconds), nameof(UsedLabel),
             nameof(CommittedLabel), nameof(AllocationLabel), nameof(P99Label), nameof(P999Label), nameof(MinPauseLabel), nameof(MaxPauseLabel), nameof(P50Label), nameof(P95Label),

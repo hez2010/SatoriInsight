@@ -1,12 +1,14 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
+using System.Runtime;
+using System.Runtime.InteropServices;
 using SatoriInsight.Models;
 
 namespace SatoriInsight.Services.Heap;
 
 /// <summary>
 /// Reads only page maps and headers, without constructing ClrRuntime or loading a DAC.
-/// Layout facts are defined by the runtime's SatoriPage.h / SatoriRegion.h / SatoriQueue.h.
+/// Layout facts are defined by SatoriPage, SatoriRegion, SatoriQueue, SatoriHeap, SatoriAllocator and SatoriRecycler.
 /// The current layout is compiler-verified against source revision 11290f7f407ae87309dbdcb75e5937c10c3b7186.
 /// Each pass validates address geometry and independently rereads mutable metadata.
 /// </summary>
@@ -27,6 +29,7 @@ public sealed class SatoriRegionReader
     private const int OccupancyOffset = 168;
     private const int ObjectCountOffset = 220;
     private const int PinnedOffset = 228;
+    private const int LowLatencyModeOffset = 388;
 
     private sealed record Page(ulong Address, ulong End, ulong First, ulong Map, byte[] Bitmap, byte[] Header);
 
@@ -40,6 +43,7 @@ public sealed class SatoriRegionReader
         var regions = new List<Region>();
         var skipped = 0;
         var complete = true;
+        GCLatencyMode? latencyMode = null;
         bool Read(ulong address, Span<byte> destination)
         {
             token.ThrowIfCancellationRequested();
@@ -55,7 +59,7 @@ public sealed class SatoriRegionReader
         }
 
         RegionReadResult Result(bool recognized, HeapRegion[] output, string? error = null) => new(
-            recognized, output, skipped, complete && error is null, readBytes, watch.Elapsed.TotalMilliseconds, error);
+            recognized, output, skipped, complete && error is null, readBytes, watch.Elapsed.TotalMilliseconds, error, latencyMode);
 
         if (memory.PointerSize != 8)
         {
@@ -299,6 +303,31 @@ public sealed class SatoriRegionReader
                     (long)U64(h, OccupancyOffset), I32(h, ObjectCountOffset), h[PinnedOffset] != 0);
                 output.Add(new(output.Count, -1, r.Address, (long)(end - committed), (long)(committed - r.Address), 0, 0,
                     header.HeapGeneration, 0, 0, [], false, end, Kind: "Region", RuntimeId: -1, Header: header));
+            }
+
+            if (pages.FirstOrDefault(page => stablePages.Contains(page.Address)) is { } stablePage)
+            {
+                // Recycler is embedded after Allocator. ARM64 uses 128-byte counter
+                // padding; x64 uses 64. Both back-pointers must agree with the page.
+                var recyclerOffset = memory.Architecture switch
+                {
+                    Architecture.X64 => 4736UL,
+                    Architecture.Arm64 => 8960UL,
+                    _ => 0UL
+                };
+                var heap = U64(stablePage.Header, 32);
+                Span<byte> pointer = stackalloc byte[8];
+                Span<byte> mode = stackalloc byte[1];
+                Span<byte> repeatedMode = stackalloc byte[1];
+
+                if (recyclerOffset != 0 && heap <= ulong.MaxValue - recyclerOffset - LowLatencyModeOffset &&
+                    Read(heap, pointer) && BinaryPrimitives.ReadUInt64LittleEndian(pointer) == heap &&
+                    Read(heap + recyclerOffset, pointer) && BinaryPrimitives.ReadUInt64LittleEndian(pointer) == heap &&
+                    Read(heap + recyclerOffset + LowLatencyModeOffset, mode) && mode[0] <= 1 &&
+                    Read(heap + recyclerOffset + LowLatencyModeOffset, repeatedMode) && mode.SequenceEqual(repeatedMode))
+                {
+                    latencyMode = mode[0] == 1 ? GCLatencyMode.LowLatency : GCLatencyMode.Interactive;
+                }
             }
 
             return Result(true, output.ToArray());

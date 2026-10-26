@@ -113,7 +113,7 @@
                     <fa:FAInfoBar IsVisible="{Binding ShowQualityNotice}" IsOpen="True" IsClosable="False" Severity="Warning" Title="Collection health"
                         Message="{Binding QualityMessage}" />
                     <local:HeapInspectorView IsVisible="{Binding IsHeapInspectorView}" />
-                    <Grid IsVisible="{Binding IsMemoryActivityView}" ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                    <Grid IsVisible="{Binding IsMemoryActivityView}" ColumnDefinitions="*,*,*,*" ColumnSpacing="12">
                         <Border Classes="panel" Padding="17,14" ToolTip.Tip="{Binding CpuTimeTooltip}">
                             <StackPanel Spacing="6">
                                 <TextBlock Text="CPU TIME" Classes="eyebrow" />
@@ -134,6 +134,14 @@
                                 <TextBlock Text="RSS" Classes="eyebrow" />
                                 <TextBlock Name="ResidentMemoryValue" Text="{Binding ResidentMemoryLabel}" FontSize="22" FontWeight="SemiBold" />
                                 <TextBlock Text="{Binding PeakResidentMemoryLabel}" Classes="muted" FontSize="11" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="3" Classes="panel" Padding="17,14"
+                            ToolTip.Tip="Last reported GC mode at the selected time, or at the end of the selected period.">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="GC MODE" Classes="eyebrow" />
+                                <TextBlock Name="GcModeValue" Text="{Binding GcModeLabel}" FontSize="22" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding GcLatencyModeLabel}" Classes="muted" FontSize="11" />
                             </StackPanel>
                         </Border>
                     </Grid>

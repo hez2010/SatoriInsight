@@ -1,3 +1,5 @@
+using System.Runtime;
+using System.Runtime.InteropServices;
 using Microsoft.Diagnostics.Runtime;
 using Microsoft.Diagnostics.Runtime.DataReaders.Implementation;
 using SatoriInsight.Models;
@@ -7,6 +9,8 @@ namespace SatoriInsight.Services.Heap;
 public interface IRegionMemory
 {
     int PointerSize { get; }
+
+    Architecture Architecture { get; }
 
     IEnumerable<(ulong Address, ulong Size)> ReadableRanges();
 
@@ -24,11 +28,13 @@ public sealed class ClrRegionMemory : IRegionMemory, IDisposable
 
         if (useProcessRanges && OperatingSystem.IsWindows())
         {
-            _windows = new(reader.ProcessId, reader.PointerSize);
+            _windows = new(reader.ProcessId, reader.PointerSize, reader.Architecture);
         }
     }
 
     public int PointerSize => reader.PointerSize;
+
+    public Architecture Architecture => reader.Architecture;
 
     public int Read(ulong address, Span<byte> destination) => _windows is null ? reader.Read(address, destination) : _windows.Read(address, destination);
 
@@ -62,4 +68,5 @@ public sealed class ClrRegionMemory : IRegionMemory, IDisposable
 }
 
 public sealed record RegionReadResult(
-    bool Recognized, HeapRegion[] Regions, int SkippedRegions, bool Complete, long BytesRead, double ReadMilliseconds, string? Error = null);
+    bool Recognized, HeapRegion[] Regions, int SkippedRegions, bool Complete, long BytesRead, double ReadMilliseconds, string? Error = null,
+    GCLatencyMode? LatencyMode = null);

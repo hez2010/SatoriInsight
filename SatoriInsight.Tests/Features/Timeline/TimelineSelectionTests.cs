@@ -13,7 +13,7 @@ public class TimelineSelectionTests
         MetricPoint Point(double at, int size, int allocation) => new(at, size, size * 2, allocation, new(
             HeapBytes: size * mib, CommittedBytes: size * 2 * mib, AllocationBytesPerSecond: allocation * mib, Gen1Bytes: size * mib));
         return new(SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 8, [Point(2, 1, 10), Point(4, 2, 20), Point(6, 3, 30)], [new(1, 1, 1, "Blocking", "Test", 5, 5, 1), new(2, 2, 0, "Blocking", "Test", 2, 2, 0.1), new(
-            3, 3, 0, "ThreadLocal", "Collected", 0.01, 0, 0, new(1, 123, true, 200, 100, 10000)), new(4, 5, 2, "Background", "Test", 100, 30, 0.2)], Point(6, 3, 30).HeapMetrics, new(), [new(2, 1, 5), new(4, 1, 10), new(6, 2, 20)], [], [], null, new(2, 1, 1), []);
+            3, 3, 0, "ThreadLocal", "Collected", 0.01, 0, 0, new(1, 123, true, 200, 100, 10000)), new(4, 5, 2, "Background", "Test", 100, 30, 0.2)], Point(6, 3, 30).HeapMetrics, new(), [new(2, 1, 5), new(4, 1, 10), new(6, 2, 20)], [], [], null, new(2, 1, 1), [], []);
     }
 
     [Fact]

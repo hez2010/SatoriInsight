@@ -103,7 +103,7 @@ public class GenerationRangeTests
 
         var session = new SavedSession(SessionStorage.CurrentSchemaVersion, "local-eventpipe", target, frame.AtSeconds,
             frame.History.ToArray(), frame.Events.ToArray(), frame.Metrics, frame.Health, frame.PauseCounters!.ToArray(),
-            frame.Regions.ToArray(), [], frame.Topology, frame.GcCounts, frame.ProcessHistory!.ToArray());
+            frame.Regions.ToArray(), [], frame.Topology, frame.GcCounts, frame.ProcessHistory!.ToArray(), frame.GcModes!.ToArray());
         var restored = SessionStorage.Read(SessionStorage.Write(session));
         Assert.Equal(ordered.Select(region => (region.StartAddress, region.Generation, region.UsedRangeBytes)),
             HeapTopology.At(restored.Topology!, frame.AtSeconds).Select(region => (region.StartAddress, region.Generation, region.UsedRangeBytes)));

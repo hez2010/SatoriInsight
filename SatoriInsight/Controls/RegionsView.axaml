@@ -60,7 +60,22 @@
                             <TextBlock Text="{Binding RegionSummary}" TextWrapping="Wrap" FontSize="12" LineHeight="19" />
                             <local:FragmentStrip Region="{Binding SelectedRegion}" Holes="{Binding RegionHoles}" Objects="{Binding RegionLayoutObjects}"
                                 Height="36" />
-                            <TextBlock Text="{Binding RegionLayoutCaption}" Classes="muted" FontSize="10" TextWrapping="Wrap" />
+                            <ItemsControl ItemsSource="{Binding RegionLayoutLegend}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="local:RegionLayoutLegendItem">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2,16,2">
+                                            <Border Width="12" Height="12" Background="{Binding Brush}" BorderBrush="#8A97AB" BorderThickness="0.5"
+                                                CornerRadius="2" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding Label}" Classes="muted" FontSize="11" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                             <DataGrid IsVisible="{Binding HasObjectCapture}" ItemsSource="{Binding RegionHoles}" Height="150"
                                 RowHeight="30" IsReadOnly="True" AutoGenerateColumns="False">
                                 <DataGrid.Columns>

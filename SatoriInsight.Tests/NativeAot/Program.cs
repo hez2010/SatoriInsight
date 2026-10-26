@@ -105,7 +105,7 @@ static class Smoke
             var profile = new HeapCaptureService().CaptureAsync(new(process), captureTimeout.Token).GetAwaiter().GetResult();
             Check(profile.Objects.Length > 0 && profile.Regions.Length > 0, "Native heap worker returned no objects.");
             var session = new SavedSession(SessionStorage.CurrentSchemaVersion, "local-eventpipe", process, 0,
-                [], [], null, null, [], [], [profile], null, null, []);
+                [], [], null, null, [], [], [profile], null, null, [], []);
             Check(SessionStorage.Read(SessionStorage.Write(session)).Snapshots[0].Objects.Length == profile.Objects.Length, "Captured heap round trip.");
             Console.WriteLine("Native process query, EventPipe and heap worker passed.");
         }
@@ -128,7 +128,7 @@ static class Smoke
         };
         var session = new SavedSession(SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 3,
             [new(1, 2, 4, 1), new(2, 3, 5, 1)], events, null, null, [], [], [], null, null,
-            [new(1, 1, 1, 10 * 1048576), new(2, 2, 2, 12 * 1048576)]);
+            [new(1, 1, 1, 10 * 1048576), new(2, 2, 2, 12 * 1048576)], []);
         var json = SessionStorage.Write(session);
         Check(SessionStorage.Read(json).Collections.Length == 2, "Session round trip.");
         using var stream = new MemoryStream();

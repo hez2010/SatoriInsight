@@ -34,7 +34,7 @@ public sealed class FragmentStrip : Control
     public override void Render(DrawingContext context)
     {
         var region = Region;
-        context.FillRectangle(Brush.Parse("#39465B"), new Rect(Bounds.Size));
+        context.FillRectangle(RegionLayoutPalette.Unknown, new Rect(Bounds.Size));
 
         if (region is null || region.EndAddress <= region.StartAddress)
         {
@@ -46,29 +46,26 @@ public sealed class FragmentStrip : Control
 
         if (region.Header is { } header)
         {
-            context.FillRectangle(Brush.Parse("#202734"), new Rect(Bounds.Size));
-            DrawRange(region.StartAddress, region.CommittedBytes, Brush.Parse("#596B84"));
-            DrawRange(region.StartAddress, (long)(header.UsedEnd - region.StartAddress), Brush.Parse("#69B7DF"));
+            context.FillRectangle(RegionLayoutPalette.Uncommitted, new Rect(Bounds.Size));
+            DrawRange(region.StartAddress, region.CommittedBytes, RegionLayoutPalette.Committed);
+            DrawRange(region.StartAddress, (long)(header.UsedEnd - region.StartAddress), RegionLayoutPalette.Used);
             return;
         }
 
         if (region.UsedRangeBytes is { } used)
         {
-            DrawRange(region.StartAddress, used, Brush.Parse("#69B7DF"));
+            DrawRange(region.StartAddress, used, RegionLayoutPalette.Used);
             return;
         }
 
-        var objects = Brush.Parse("#73D5B0");
-        var holes = Brush.Parse("#E6B56E");
-
         foreach (var obj in Objects ?? [])
         {
-            DrawRange(obj.Address, obj.Size, objects);
+            DrawRange(obj.Address, obj.Size, RegionLayoutPalette.Objects);
         }
 
         foreach (var hole in Holes ?? [])
         {
-            DrawRange(hole.Address, hole.Size, holes);
+            DrawRange(hole.Address, hole.Size, RegionLayoutPalette.Free);
         }
 
         void DrawRange(ulong address, long size, IBrush brush)

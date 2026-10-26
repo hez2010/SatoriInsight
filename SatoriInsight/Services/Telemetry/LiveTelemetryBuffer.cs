@@ -261,7 +261,7 @@ public sealed partial class LiveTelemetryBuffer
             return new(
                 _latestSeconds, _regions.Values.OrderBy(r => r.StartAddress).ToArray(), _events.Snapshot(), _history.ToArray(),
                 _metrics.AllocationBytesPerSecond / 1_048_576, _metrics, _health, _pauseCounters.ToArray(),
-                new(0, [], _topologyChanges.ToArray(), _regionSamples.ToArray()), Counts, _processHistory.ToArray());
+                new(0, [], _topologyChanges.ToArray(), _regionSamples.ToArray()), Counts, _processHistory.ToArray(), _gcModes.ToArray());
         }
     }
 

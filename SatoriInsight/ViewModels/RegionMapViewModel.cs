@@ -116,7 +116,7 @@ public sealed class RegionMapViewModel : INotifyPropertyChanged
         _regionObjects = _snapshot?.Objects.Where(obj => obj.RegionId == SelectedRegion?.Id).OrderBy(obj => obj.Address).ToArray() ?? [];
         _regionHoles = _snapshot?.Holes.Where(hole => hole.RegionId == SelectedRegion?.Id).OrderByDescending(hole => hole.Size).ToArray() ?? [];
         SelectedRegionObject = _regionObjects.FirstOrDefault(obj => obj.Address == selectedObject?.Address);
-        Notify(nameof(RegionSummary), nameof(RegionHoles), nameof(RegionObjects), nameof(RegionLayoutObjects), nameof(RegionObjectsLabel), nameof(RegionLayoutCaption));
+        Notify(nameof(RegionSummary), nameof(RegionHoles), nameof(RegionObjects), nameof(RegionLayoutObjects), nameof(RegionObjectsLabel), nameof(RegionLayoutLegend));
     }
 
     public string RegionSummary
@@ -182,10 +182,7 @@ public sealed class RegionMapViewModel : INotifyPropertyChanged
 
     public string RegionObjectsLabel => $"{_regionObjects.Length:N0} objects";
 
-    public string RegionLayoutCaption => SelectedRegion?.Header is not null
-        ? "Blue = used range · Slate = remaining committed space · Dark = uncommitted"
-        : SelectedRegion?.UsedRangeBytes is not null ? "Blue = used range · Gray = remaining reserved space"
-        : "Green = objects · Amber = free space · Gray = unknown";
+    public IReadOnlyList<RegionLayoutLegendItem> RegionLayoutLegend => RegionLayoutPalette.GetLegend(SelectedRegion, HasObjectCapture);
 
     public void InspectRegionObject(HeapObjectInfo obj)
     {

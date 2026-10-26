@@ -15,7 +15,7 @@ public class ThreadLocalCollectionTests
 
     private static SavedSession Save(DiagnosticFrame f) => new(
         SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, f.AtSeconds, f.History.ToArray(), f.Events.ToArray(), f.Metrics, f.Health,
-        f.PauseCounters!.ToArray(), f.Regions.ToArray(), [], f.Topology, f.GcCounts, f.ProcessHistory!.ToArray());
+        f.PauseCounters!.ToArray(), f.Regions.ToArray(), [], f.Topology, f.GcCounts, f.ProcessHistory!.ToArray(), f.GcModes!.ToArray());
 
     [Fact]
     public void ThreadLocalFloodKeepsAllDetailsGlobalPausesAndGenerationTotals()

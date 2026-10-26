@@ -9,4 +9,4 @@ public sealed record DiagnosticFrame(
     double AtSeconds, IReadOnlyList<HeapRegion> Regions, IReadOnlyList<GcEvent> Events, IReadOnlyList<MetricPoint> History, double? AllocationMiB,
     RuntimeHeapMetrics? Metrics = null, CollectionHealth? Health = null, IReadOnlyList<GcPauseCounterPoint>? PauseCounters = null,
     HeapTopologyHistory? Topology = null, GcCollectionCounts? GcCounts = null,
-    IReadOnlyList<ProcessMetricPoint>? ProcessHistory = null);
+    IReadOnlyList<ProcessMetricPoint>? ProcessHistory = null, IReadOnlyList<GcModeSample>? GcModes = null);

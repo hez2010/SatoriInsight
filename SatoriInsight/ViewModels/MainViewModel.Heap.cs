@@ -462,6 +462,8 @@ public sealed partial class MainViewModel
     {
         session.Metrics.FirstOrDefault()?.Seconds,
         session.Collections.MinBy(gc => gc.EndSeconds)?.EndSeconds,
+        session.ProcessMetrics.FirstOrDefault()?.Seconds,
+        session.GcModes.FirstOrDefault()?.Seconds,
         session.Topology?.StartSeconds
     }.Where(v => v.HasValue).Select(v => v!.Value).DefaultIfEmpty(0).Min() : 0;
 

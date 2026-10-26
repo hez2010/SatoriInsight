@@ -62,7 +62,7 @@ public class HeapProfilingTests
     public async Task ReplayScrubsAndTailPercentileAndMaximumUseSelectedWindow()
     {
         var events = Enumerable.Range(1, 1000).Select(i => new GcEvent(i, i / 100d, 0, "Blocking", "Test", i, i, 0)).ToArray();
-        var session = new SavedSession(SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 10, [new(1, 1, 2, 3)], events, null, null, [], [], [], null, null, []);
+        var session = new SavedSession(SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 10, [new(1, 1, 2, 3)], events, null, null, [], [], [], null, null, [], []);
         await using var vm = new MainViewModel();
         await vm.ImportSessionAsync(System.Text.Json.JsonSerializer.Serialize(session));
         Assert.Equal("999.00 ms", vm.P999Label);
@@ -85,7 +85,7 @@ public class HeapProfilingTests
         var frame = buffer.Read(4);
         var session = new SavedSession(
             SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 4, frame.History.ToArray(), [], frame.Metrics, frame.Health, [],
-            frame.Regions.ToArray(), [], frame.Topology, frame.GcCounts, []);
+            frame.Regions.ToArray(), [], frame.Topology, frame.GcCounts, [], []);
         await using var vm = new MainViewModel();
         await vm.ImportSessionAsync(SessionStorage.Write(session));
         vm.ReplayPosition = 1.5;
@@ -143,7 +143,7 @@ public class HeapProfilingTests
     public void SessionImportRejectsCorruptObjectGraphsBeforeReplacingTheSession()
     {
         var profile = Graph();
-        var session = new SavedSession(SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 0, [], [], null, null, [], [], [profile], null, null, []);
+        var session = new SavedSession(SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 0, [], [], null, null, [], [], [profile], null, null, [], []);
         Assert.Single(SessionStorage.Read(SessionStorage.Write(session)).Snapshots);
         Assert.Throws<InvalidDataException>(() => SessionStorage.Read(SessionStorage.Write(session with { Snapshots = [profile with { Objects = [profile.Objects[0], profile.Objects[0]] }] })));
         Assert.Throws<InvalidDataException>(() => SessionStorage.Read(SessionStorage.Write(session with { Snapshots = [profile with { Objects = [profile.Objects[0] with { References = null! }] }] })));
@@ -166,7 +166,7 @@ public class HeapProfilingTests
             Assert.NotEmpty(profile.Regions);
             Assert.NotEmpty(profile.Warnings);
             Assert.Contains(profile.Regions, region => !region.DetailsKnown);
-            var session = new SavedSession(SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 0, [], [], null, null, [], [], [profile], null, null, []);
+            var session = new SavedSession(SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 0, [], [], null, null, [], [], [profile], null, null, [], []);
             Assert.Single(SessionStorage.Read(SessionStorage.Write(session)).Snapshots);
         }
         finally

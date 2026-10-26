@@ -24,7 +24,7 @@ public class ProcessMetricsTests
     ];
 
     private static SavedSession Session(ProcessMetricPoint[]? measurements = null) =>
-        new(SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 8, [], [], null, null, [], [], [], null, null, measurements ?? Measurements());
+        new(SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 8, [], [], null, null, [], [], [], null, null, measurements ?? Measurements(), []);
 
     [Fact]
     public void SamplesAreRetainedIndependentlyOfHeapCounters()

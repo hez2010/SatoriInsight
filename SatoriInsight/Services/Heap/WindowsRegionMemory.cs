@@ -12,9 +12,12 @@ internal sealed class WindowsRegionMemory : IRegionMemory, IDisposable
 
     public int PointerSize { get; }
 
-    public WindowsRegionMemory(int processId, int pointerSize)
+    public Architecture Architecture { get; }
+
+    public WindowsRegionMemory(int processId, int pointerSize, Architecture architecture)
     {
         PointerSize = pointerSize;
+        Architecture = architecture;
         _process = OpenProcess(0x0400 | 0x0010, false, processId);
 
         if (_process.IsInvalid)

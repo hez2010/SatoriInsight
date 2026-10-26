@@ -73,7 +73,7 @@ public class RegionMetadataTests
         Assert.Single(frame.Regions);
         Assert.Equal(before.Regions[0].Id, frame.Regions[0].Id);
         var session = new SavedSession(
-            SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 8, [], [], null, frame.Health, [], frame.Regions.ToArray(), [], frame.Topology, frame.GcCounts, []);
+            SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 8, [], [], null, frame.Health, [], frame.Regions.ToArray(), [], frame.Topology, frame.GcCounts, [], []);
         await using var vm = new MainViewModel();
         await vm.ImportSessionAsync(SessionStorage.Write(session));
         vm.ReplayPosition = 3;
@@ -104,7 +104,7 @@ public class RegionMetadataTests
         var profile = new HeapProfile(Guid.NewGuid(), DateTime.UtcNow, null, "test", 0, 0,
             [captured], [], [], [], [], [], MetadataOnly: true);
         var session = new SavedSession(SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 2, [], [], null,
-            frame.Health, [], frame.Regions.ToArray(), [profile], frame.Topology, frame.GcCounts, []);
+            frame.Health, [], frame.Regions.ToArray(), [profile], frame.Topology, frame.GcCounts, [], []);
 
         await using var vm = new MainViewModel();
         await vm.ImportSessionAsync(SessionStorage.Write(session));
@@ -239,7 +239,7 @@ public class RegionMetadataTests
             Assert.False(vm.HasObjectCapture);
             Assert.False(vm.CapturedRegionMap.HasObjectCapture);
             Assert.Contains("Reported occupancy", vm.CapturedRegionMap.RegionSummary);
-            Assert.Contains("used range", vm.CapturedRegionMap.RegionLayoutCaption);
+            Assert.Contains(vm.CapturedRegionMap.RegionLayoutLegend, item => item.Label == "Used range");
         }
         finally
         {

@@ -5,7 +5,7 @@ namespace SatoriInsight.Services.Recording;
 
 public static class SessionStorage
 {
-    public const int CurrentSchemaVersion = 10;
+    public const int CurrentSchemaVersion = 11;
 
     public static string Write(SavedSession session) => JsonSerializer.Serialize(session, ProfilerJsonContext.Default.SavedSession);
 
@@ -34,7 +34,7 @@ public static class SessionStorage
         }
 
         if (session.Metrics is null || session.Collections is null || session.PauseCounters is null || session.Regions is null
-            || session.Snapshots is null || session.ProcessMetrics is null)
+            || session.Snapshots is null || session.ProcessMetrics is null || session.GcModes is null)
         {
             throw new InvalidDataException("Session is missing telemetry arrays.");
         }
@@ -51,6 +51,21 @@ public static class SessionStorage
         }
 
         ValidateProcessMetrics(session.ProcessMetrics, session.SessionSeconds);
+
+        var previousModeTime = 0d;
+
+        foreach (var sample in session.GcModes)
+        {
+            if (sample is null || !Time(sample.Seconds) || sample.Seconds < previousModeTime ||
+                sample.Collector is null && sample.LatencyMode is null ||
+                sample.Collector is { } collector && !Enum.IsDefined(collector) ||
+                sample.LatencyMode is { } latency && !Enum.IsDefined(latency))
+            {
+                throw new InvalidDataException("Invalid GC mode history.");
+            }
+
+            previousModeTime = sample.Seconds;
+        }
 
         foreach (var gc in session.Collections)
         {
