@@ -160,6 +160,8 @@ public class RegionMetadataTests
             Assert.NotEmpty(frame.Regions);
 
             Assert.All(frame.Regions, r => Assert.NotNull(r.Header));
+            var expectedMode = Enum.Parse<System.Runtime.GCLatencyMode>(identity.RootElement.GetProperty("LatencyMode").GetString()!);
+            Assert.Contains(frame.GcModes!, mode => mode.Collector == GcCollectorKind.Satori && mode.LatencyMode == expectedMode);
             Assert.All(frame.Regions, region => Assert.Null(region.UsedRangeBytes));
             Assert.All(frame.Regions, region => Assert.Equal(region.Header!.HeapGeneration, region.DisplayGeneration));
             var samples = frame.Topology!.Samples!;

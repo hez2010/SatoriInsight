@@ -9,7 +9,7 @@ namespace SatoriInsight.Services.Heap;
 /// <summary>
 /// Reads only page maps and headers, without constructing ClrRuntime or loading a DAC.
 /// Layout facts are defined by SatoriPage, SatoriRegion, SatoriQueue, SatoriHeap, SatoriAllocator and SatoriRecycler.
-/// The x64 and ARM64 layouts are compiler-verified against source revision 2e8439c701c7502aa45e326202fdb2403d4ae1d0.
+/// Probes recent x64 and ARM64 layout variants.
 /// Each pass validates address geometry and independently rereads mutable metadata.
 /// </summary>
 public sealed class SatoriRegionReader
@@ -22,17 +22,9 @@ public sealed class SatoriRegionReader
     private const int MaxRegions = 65536;
     private const long ByteBudget = 16 * 1024 * 1024;
 
-    private const int UsedOffset = 88;
-    private const int CommittedOffset = 96;
-    private const int QueueOffset = 160;
-    private const int OccupancyOffset = 168;
-    private const int ObjectCountOffset = 220;
-    private const int PinnedOffset = 228;
-    private const int LowLatencyModeOffset = 388;
-
     private sealed record Page(ulong Address, ulong End, ulong First, ulong Map, byte[] Bitmap, byte[] Header);
 
-    private sealed record Region(Page Page, ulong Address, byte[] Header);
+    private sealed record Region(Page Page, ulong Address, byte[] Header, SatoriRegionProbe Probe, int Layouts);
 
     public RegionReadResult Read(IRegionMemory memory, CancellationToken token = default)
     {
@@ -85,58 +77,42 @@ public sealed class SatoriRegionReader
             return value is >= 0 and <= 16 ? queues[pointer] = (RegionQueueKind)value : null;
         }
 
-        bool Fits(Page page, ulong address, byte[] header)
-        {
-            var end = U64(header, 24);
-            var used = U64(header, UsedOffset);
-            var committed = U64(header, CommittedOffset);
-            var allocationStart = U64(header, 64);
-            var allocationEnd = U64(header, 72);
-            var queue = U64(header, QueueOffset);
-
-            if (U64(header, 32) != page.Address || end <= address || end > page.End || (end - address) % RegionSize != 0
-                || I32(header, 16) is < -1 or > 3)
-            {
-                return false;
-            }
-
-            if (used < address + FirstObjectOffset - 8 || used > committed || committed > end || committed % 4096 != 0
-                || U64(header, OccupancyOffset) > end - address - FirstObjectOffset
-                || I32(header, ObjectCountOffset) < 0 || header[PinnedOffset] > 1 || header[40] > 2)
-            {
-                return false;
-            }
-
-            if ((allocationStart != 0 || allocationEnd != 0)
-                && (allocationStart < address + FirstObjectOffset || allocationStart > allocationEnd || allocationEnd > end))
-            {
-                return false;
-            }
-
-            // Queue neighbors may be changing or unreadable independently. They are
-            // not needed to identify this region or interpret its displayed metadata.
-            return queue == 0 || Queue(queue).HasValue;
-        }
-
-        byte[]? ReadHeader(Page page, ulong address)
+        Region? ReadHeader(Page page, ulong address)
         {
             var header = new byte[HeaderSize];
             var repeated = new byte[HeaderSize];
 
             for (var attempt = 0; attempt < HeaderReadAttempts; attempt++)
             {
-                if (Read(address, header) && Read(address, repeated) && SameMetadata(header, repeated) && Fits(page, address, header))
+                if (!Read(address, header) || !Read(address, repeated))
                 {
-                    return header;
+                    continue;
+                }
+
+                var candidates = 0;
+
+                var probe = new SatoriRegionProbe(page.Address, page.End, address, header, repeated, Queue);
+
+                for (var index = 0; index < SatoriLayouts.All.Length; index++)
+                {
+                    if (SatoriLayouts.All[index].Read(probe) is not null)
+                    {
+                        candidates |= 1 << index;
+                    }
+                }
+
+                if (candidates != 0)
+                {
+                    return new(page, address, header, probe, candidates);
                 }
             }
 
             return null;
         }
 
-        if (memory.PointerSize != 8)
+        if (memory.PointerSize != 8 || memory.Architecture is not (Architecture.X64 or Architecture.Arm64))
         {
-            return Result(false, [], "Region maps require a 64-bit process.");
+            return Result(false, [], "Region maps require an x64 or ARM64 process.");
         }
 
         try
@@ -227,16 +203,16 @@ public sealed class SatoriRegionReader
                         }
 
                         var address = candidate + (ulong)i * RegionSize;
-                        var bytes = ReadHeader(page, address);
+                        var region = ReadHeader(page, address);
 
-                        if (bytes is null)
+                        if (region is null)
                         {
                             complete = false;
                             skipped++;
                             continue;
                         }
 
-                        regions.Add(new(page, address, bytes));
+                        regions.Add(region);
                     }
                 }
             }
@@ -248,13 +224,13 @@ public sealed class SatoriRegionReader
 
             if (regions.Count == 0)
             {
-                return Result(true, [], "Could not read the region data. Try capturing again.");
+                return Result(true, [], "No supported, stable Satori region layout was found. Try capturing again.");
             }
 
             // Validate each region against the final map. A split elsewhere on the
             // page must not discard unrelated regions. Partial passes retain old data.
-            var stablePages = new HashSet<ulong>();
             var pageRegions = regions.ToLookup(region => region.Page.Address);
+            var stableRegions = new List<Region>();
             var output = new List<HeapRegion>();
 
             foreach (var page in pages)
@@ -270,7 +246,6 @@ public sealed class SatoriRegionReader
                     continue;
                 }
 
-                stablePages.Add(page.Address);
                 complete &= bitmap.AsSpan().SequenceEqual(page.Bitmap);
                 var boundary = page.First;
                 var geometry = new byte[16];
@@ -295,47 +270,70 @@ public sealed class SatoriRegionReader
 
                     complete &= region.Address == boundary;
                     boundary = end;
-
-                    var generation = I32(h, 16);
-                    var committed = U64(h, CommittedOffset);
-                    var metadata = new RegionHeaderInfo(
-                        page.Address, page.End, generation, Queue(U64(h, QueueOffset)), (RegionReuseLevel)h[40], U64(h, UsedOffset), committed, U64(h, 64), U64(h, 72),
-                        (long)U64(h, OccupancyOffset), I32(h, ObjectCountOffset), h[PinnedOffset] != 0);
-                    output.Add(new(output.Count, -1, region.Address, (long)(end - committed), (long)(committed - region.Address), 0, 0,
-                        metadata.HeapGeneration, 0, 0, [], false, end, Kind: "Region", RuntimeId: -1, Header: metadata));
+                    stableRegions.Add(region);
                 }
 
                 complete &= boundary == page.End;
             }
 
-            if (output.Count == 0)
+            var heapModes = new List<GCLatencyMode?>();
+
+            foreach (var heapRegions in stableRegions.GroupBy(region => U64(region.Page.Header, 32)))
             {
-                return Result(true, [], "No stable region data was available. Try again.");
+                // Use one interpretation for the whole heap, including other pages.
+                // A changing or incompatible region must not silently select its own
+                // unrelated layout. No candidate is cached across samples/processes.
+                var candidates = heapRegions.Aggregate(SatoriLayouts.AllMask, (mask, region) => mask & region.Layouts);
+                var heap = new SatoriHeapProbe(heapRegions.Key, memory.Architecture, Read);
+                var matched = 0;
+                var modes = new GCLatencyMode?[SatoriLayouts.All.Length];
+
+                for (var index = 0; index < SatoriLayouts.All.Length; index++)
+                {
+                    if (SatoriLayouts.All[index].TryMatch(heap, out var mode))
+                    {
+                        matched |= 1 << index;
+                        modes[index] = mode;
+                    }
+                }
+
+                if (matched != 0)
+                {
+                    candidates &= matched;
+                }
+
+                if (candidates == 0)
+                {
+                    complete = false;
+                    skipped += heapRegions.Count();
+                    continue;
+                }
+
+                // The catalog is ordered newest first. Incomplete dumps can still
+                // supply region metadata even when independent heap probes fail.
+                var selected = System.Numerics.BitOperations.TrailingZeroCount((uint)candidates);
+                var layout = SatoriLayouts.All[selected];
+                heapModes.Add(modes[selected]);
+
+                foreach (var region in heapRegions)
+                {
+                    var h = region.Header;
+                    var end = U64(h, 24);
+                    var metadata = layout.Read(region.Probe)!;
+                    var committed = metadata.CommittedEnd;
+                    output.Add(new(output.Count, -1, region.Address, (long)(end - committed), (long)(committed - region.Address), 0, 0,
+                        metadata.HeapGeneration, 0, 0, [], false, end, Kind: "Region", RuntimeId: -1, Header: metadata));
+                }
             }
 
-            if (pages.FirstOrDefault(page => stablePages.Contains(page.Address)) is { } stablePage)
+            if (output.Count == 0)
             {
-                // Recycler is embedded after Allocator. ARM64 uses 128-byte counter
-                // padding; x64 uses 64. Both back-pointers must agree with the page.
-                var recyclerOffset = memory.Architecture switch
-                {
-                    Architecture.X64 => 4736UL,
-                    Architecture.Arm64 => 8960UL,
-                    _ => 0UL
-                };
-                var heap = U64(stablePage.Header, 32);
-                Span<byte> pointer = stackalloc byte[8];
-                Span<byte> mode = stackalloc byte[1];
-                Span<byte> repeatedMode = stackalloc byte[1];
+                return Result(true, [], "No supported, consistent Satori region layout was found. Try capturing again.");
+            }
 
-                if (recyclerOffset != 0 && heap <= ulong.MaxValue - recyclerOffset - LowLatencyModeOffset &&
-                    Read(heap, pointer) && BinaryPrimitives.ReadUInt64LittleEndian(pointer) == heap &&
-                    Read(heap + recyclerOffset, pointer) && BinaryPrimitives.ReadUInt64LittleEndian(pointer) == heap &&
-                    Read(heap + recyclerOffset + LowLatencyModeOffset, mode) && mode[0] <= 1 &&
-                    Read(heap + recyclerOffset + LowLatencyModeOffset, repeatedMode) && mode.SequenceEqual(repeatedMode))
-                {
-                    latencyMode = mode[0] == 1 ? GCLatencyMode.LowLatency : GCLatencyMode.Interactive;
-                }
+            if (heapModes.Distinct().Count() == 1)
+            {
+                latencyMode = heapModes[0];
             }
 
             return Result(true, output.ToArray());
@@ -349,18 +347,5 @@ public sealed class SatoriRegionReader
 
     private sealed class SamplingBudgetException : Exception;
 
-    // Compare only the fields displayed or validated above. Queue links, allocation
-    // counters, locks, and other collector bookkeeping can change independently.
-    private static bool SameMetadata(byte[] first, byte[] second) =>
-        first.AsSpan(16, 4).SequenceEqual(second.AsSpan(16, 4))
-        && first.AsSpan(24, 17).SequenceEqual(second.AsSpan(24, 17))
-        && first.AsSpan(64, 16).SequenceEqual(second.AsSpan(64, 16))
-        && first.AsSpan(UsedOffset, 16).SequenceEqual(second.AsSpan(UsedOffset, 16))
-        && first.AsSpan(QueueOffset, 16).SequenceEqual(second.AsSpan(QueueOffset, 16))
-        && first.AsSpan(ObjectCountOffset, 4).SequenceEqual(second.AsSpan(ObjectCountOffset, 4))
-        && first[PinnedOffset] == second[PinnedOffset];
-
     private static ulong U64(byte[] data, int offset) => BinaryPrimitives.ReadUInt64LittleEndian(data.AsSpan(offset));
-
-    private static int I32(byte[] data, int offset) => BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(offset));
 }
