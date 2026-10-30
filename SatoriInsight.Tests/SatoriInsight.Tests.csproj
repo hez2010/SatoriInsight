@@ -27,7 +27,7 @@
       </_WorkloadFiles>
     </ItemGroup>
     <Copy SourceFiles="@(_WorkloadFiles)" DestinationFiles="@(_WorkloadFiles->'%(DestinationFolder)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
-    <Exec Condition="'$(OS)' == 'Windows_NT'"
-          Command="dotnet publish &quot;$(MSBuildThisFileDirectory)Workloads/Satori/SatoriInsight.SatoriWorkload.csproj&quot; -c $(Configuration) -r win-x64 --self-contained true -p:UseSatoriGC=true -o &quot;$(TargetDir)Workloads/Satori&quot;" />
+    <Exec Condition="'$(OS)' == 'Windows_NT' or $([MSBuild]::IsOSPlatform('Linux'))"
+          Command="dotnet publish &quot;$(MSBuildThisFileDirectory)Workloads/Satori/SatoriInsight.SatoriWorkload.csproj&quot; -c $(Configuration) -r $(NETCoreSdkRuntimeIdentifier) --self-contained true -p:UseSatoriGC=true -o &quot;$(TargetDir)Workloads/Satori&quot;" />
   </Target>
 </Project>

@@ -293,7 +293,7 @@ public sealed class EventPipeCollector : ILiveTelemetrySession
             using var memory = new ClrRegionMemory(target.DataReader, useProcessRanges: true);
             var sample = reader.Read(memory, token);
             recognized |= sample.Recognized;
-            attempted = true;
+            attempted = sample.Recognized || sample.Error is null;
 
             if (sample.Recognized)
             {
@@ -320,7 +320,9 @@ public sealed class EventPipeCollector : ILiveTelemetrySession
         }
         catch (Exception exception)
         {
-            attempted = true;
+            // A failed read is not evidence that this is a different collector.
+            // Retry on the next tick instead of leaving the map/mode unknown forever.
+            attempted = false;
 
             if (recognized || Volatile.Read(ref _threadLocalObserved) != 0)
             {

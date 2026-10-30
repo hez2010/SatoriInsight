@@ -21,10 +21,14 @@ public sealed class ClrRegionMemory : IRegionMemory, IDisposable
 {
     private readonly IDataReader reader;
     private readonly WindowsRegionMemory? _windows;
+    private readonly bool _linuxProcessRanges;
 
     public ClrRegionMemory(IDataReader reader, bool useProcessRanges = false)
     {
         this.reader = reader;
+        // A Linux snapshot/dump can already expose its captured map. Never pair
+        // those saved bytes with the original process's current mappings.
+        _linuxProcessRanges = useProcessRanges && OperatingSystem.IsLinux() && reader is not IMemoryRegionReader;
 
         if (useProcessRanges && OperatingSystem.IsWindows())
         {
@@ -43,6 +47,16 @@ public sealed class ClrRegionMemory : IRegionMemory, IDisposable
         if (_windows is not null)
         {
             foreach (var range in _windows.ReadableRanges())
+            {
+                yield return range;
+            }
+
+            yield break;
+        }
+
+        if (_linuxProcessRanges)
+        {
+            foreach (var range in LinuxProcessMemoryMap.ReadableRanges(reader.ProcessId))
             {
                 yield return range;
             }

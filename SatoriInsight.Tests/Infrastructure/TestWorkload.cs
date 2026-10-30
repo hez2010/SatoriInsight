@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Globalization;
+using System.Runtime;
 using Xunit;
 
 namespace SatoriInsight.Tests;
@@ -22,7 +24,17 @@ internal sealed class TestWorkload(Process process) : IDisposable
         return StartAsync(info);
     }
 
-    public static Task<TestWorkload> StartSatoriAsync() => StartAsync(new ProcessStartInfo(TestPaths.SatoriWorkload));
+    public static Task<TestWorkload> StartSatoriAsync(GCLatencyMode? latencyMode = null)
+    {
+        var info = new ProcessStartInfo(TestPaths.SatoriWorkload);
+
+        if (latencyMode is { } mode)
+        {
+            info.Environment["DOTNET_GCLatencyMode"] = ((int)mode).ToString(CultureInfo.InvariantCulture);
+        }
+
+        return StartAsync(info);
+    }
 
     private static async Task<TestWorkload> StartAsync(ProcessStartInfo info)
     {

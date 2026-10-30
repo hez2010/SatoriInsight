@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.Runtime;
 using System.Text.Json;
+using Microsoft.Diagnostics.Runtime;
 using SatoriInsight.Models;
 using SatoriInsight.Services.Heap;
 using SatoriInsight.Services.Recording;
@@ -84,6 +86,49 @@ public class RegionMetadataTests
 
     public static bool SupportsRegionTarget => OperatingSystem.IsWindows();
 
+    public static bool SupportsLiveRegionTarget => OperatingSystem.IsWindows() || OperatingSystem.IsLinux();
+
+    [Theory(Timeout = 30000, SkipUnless = nameof(SupportsLiveRegionTarget), Skip = "Requires Windows or Linux process inspection.")]
+    [InlineData(GCLatencyMode.Interactive)]
+    [InlineData(GCLatencyMode.LowLatency)]
+    public async Task LiveRegionsAndLatencyAreReadFromTheTarget(GCLatencyMode expectedMode)
+    {
+        using var workload = await TestWorkload.StartSatoriAsync(expectedMode);
+        var process = workload.Process;
+        var token = TestContext.Current.CancellationToken;
+        await process.StandardInput.WriteLineAsync("runtime");
+        var line = await process.StandardOutput.ReadLineAsync(token);
+        using var identity = JsonDocument.Parse(line![8..]);
+        Assert.True(identity.RootElement.GetProperty("IsSatoriGC").GetBoolean());
+        Assert.Equal(expectedMode.ToString(), identity.RootElement.GetProperty("LatencyMode").GetString());
+
+        // Check the memory reader directly: GC events must not mask a failed probe.
+        using (var target = DataTarget.AttachToProcess(process.Id, suspend: false))
+        using (var memory = new ClrRegionMemory(target.DataReader, useProcessRanges: true))
+        {
+            var sample = new SatoriRegionReader().Read(memory, token);
+            Assert.True(sample.Recognized, sample.Error);
+            Assert.NotEmpty(sample.Regions);
+            Assert.Equal(expectedMode, sample.LatencyMode);
+        }
+
+        await using var collector = await EventPipeCollector.StartAsync(
+            new(process.Id, "Region test target", process.StartTime.ToUniversalTime()), token);
+        var timer = Stopwatch.StartNew();
+        var frame = collector.Read();
+
+        while (frame.Topology?.Samples?.Length is not >= 2 && timer.Elapsed < TimeSpan.FromSeconds(10))
+        {
+            await Task.Delay(100, token);
+            frame = collector.Read();
+        }
+
+        Assert.Contains(frame.Regions, region => region.Header is not null);
+        Assert.Contains(frame.GcModes!, mode => mode.Collector == GcCollectorKind.Satori && mode.LatencyMode == expectedMode);
+        Assert.True(frame.Topology?.Samples?.Length >= 2);
+        Assert.True(frame.Topology.Samples[^1].Seconds > frame.Topology.Samples[0].Seconds);
+    }
+
     [Fact]
     public async Task LiveRegionHistoryIsIndependentOfTheSelectedCapture()
     {
@@ -146,6 +191,8 @@ public class RegionMetadataTests
             var identityLine = await process.StandardOutput.ReadLineAsync(TestContext.Current.CancellationToken);
             using var identity = JsonDocument.Parse(identityLine![8..]);
             Assert.True(identity.RootElement.GetProperty("IsSatoriGC").GetBoolean());
+            var expectedMode = Enum.Parse<System.Runtime.GCLatencyMode>(identity.RootElement.GetProperty("LatencyMode").GetString()!);
+
             var target = new LocalDotNetProcess(process.Id, "Region test target", process.StartTime.ToUniversalTime());
             await using var collector = await EventPipeCollector.StartAsync(target, TestContext.Current.CancellationToken);
             DiagnosticFrame frame = collector.Read();
@@ -160,7 +207,6 @@ public class RegionMetadataTests
             Assert.NotEmpty(frame.Regions);
 
             Assert.All(frame.Regions, r => Assert.NotNull(r.Header));
-            var expectedMode = Enum.Parse<System.Runtime.GCLatencyMode>(identity.RootElement.GetProperty("LatencyMode").GetString()!);
             Assert.Contains(frame.GcModes!, mode => mode.Collector == GcCollectorKind.Satori && mode.LatencyMode == expectedMode);
             Assert.All(frame.Regions, region => Assert.Null(region.UsedRangeBytes));
             Assert.All(frame.Regions, region => Assert.Equal(region.Header!.HeapGeneration, region.DisplayGeneration));
