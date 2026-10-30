@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace SatoriInsight.Services.Heap;
 
 // PR #139 (.NET 10: #140): recycler queues are sharded; relocated-to-higher-generation remains ordinary.
-internal sealed class LayoutVariant09 : LayoutVariant08
+internal class LayoutVariant09 : LayoutVariant08
 {
     public override int PullRequest => 139;
 

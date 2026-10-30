@@ -8,6 +8,13 @@ namespace SatoriInsight.Services.Heap;
 internal sealed class SatoriRegionProbe(
     ulong page, ulong pageEnd, ulong address, byte[] header, byte[] repeated, Func<ulong, RegionQueueKind?> queueKind)
 {
+    internal bool IsSizeWithinRegion(int offset)
+    {
+        var end = U64(24);
+        return end >= address && end - address >= SatoriRegionReader.FirstObjectOffset
+            && U64(offset) <= end - address - SatoriRegionReader.FirstObjectOffset && Same(offset, 8);
+    }
+
     internal RegionHeaderInfo? Read(
         int usedEndOffset, int committedEndOffset, int containingQueueOffset,
         int occupancyOffset, int objectCountOffset, int hasPinnedObjectsOffset)
