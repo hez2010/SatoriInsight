@@ -3,7 +3,7 @@ using SatoriInsight.Models;
 namespace SatoriInsight.Services.Heap;
 
 // PR #144 (.NET 10: #145): usable-capacity accounting moves the region's object count and flags.
-internal sealed class LayoutVariant10 : LayoutVariant09
+internal class LayoutVariant10 : LayoutVariant09
 {
     public override int PullRequest => 144;
 

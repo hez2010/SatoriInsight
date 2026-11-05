@@ -320,6 +320,24 @@
                                         </StackPanel>
                                     </Grid>
                                 </Border>
+                                <Border IsVisible="{Binding HasEventEscapedBytes}" BorderBrush="{StaticResource LineBrush}"
+                                    BorderThickness="0,1,0,0" Padding="0,14,0,0"
+                                    ToolTip.Tip="Escaped-byte totals for the collected region. The after value includes changes from processing pending finalizers.">
+                                    <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="16">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="THREAD-LOCAL GC" Classes="eyebrow" />
+                                            <TextBlock Text="Escaped bytes" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="5">
+                                            <TextBlock Text="BEFORE" Classes="eyebrow" />
+                                            <TextBlock Text="{Binding EventEscapedBefore}" FontSize="18" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="5">
+                                            <TextBlock Text="AFTER" Classes="eyebrow" />
+                                            <TextBlock Text="{Binding EventEscapedAfter}" FontSize="18" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
                                 <DataGrid IsVisible="{Binding HasEventGenerations}" ItemsSource="{Binding EventGenerations}"
                                     AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="220">
                                     <DataGrid.Columns>

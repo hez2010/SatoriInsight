@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+using System.Diagnostics;
 using SatoriInsight.Models;
 using SatoriInsight.Services.Recording;
 using SatoriInsight.Services.Telemetry;
@@ -8,6 +10,41 @@ namespace SatoriInsight.Tests;
 
 public class ThreadLocalCollectionTests
 {
+    public static bool SupportsLiveTarget => OperatingSystem.IsWindows() || OperatingSystem.IsLinux();
+
+    [Fact(Timeout = 30000, SkipUnless = nameof(SupportsLiveTarget), Skip = "Requires Windows or Linux process inspection.")]
+    public async Task PublishedSatoriRuntimeStillDeliversThreadLocalEvents()
+    {
+        using var workload = await TestWorkload.StartSatoriAsync();
+        var process = workload.Process;
+        var token = TestContext.Current.CancellationToken;
+        await using var collector = await EventPipeCollector.StartAsync(
+            new(process.Id, "Thread-local GC target", process.StartTime.ToUniversalTime()), token);
+        await process.StandardInput.WriteLineAsync("localgc");
+        Assert.Equal("LOCAL_GC_DONE", await process.StandardOutput.ReadLineAsync(token));
+        var timer = Stopwatch.StartNew();
+        var frame = collector.Read();
+
+        while (!frame.Events.Any(gc => gc.IsThreadLocal) && timer.Elapsed < TimeSpan.FromSeconds(10))
+        {
+            await Task.Delay(100, token);
+            frame = collector.Read();
+        }
+
+        var events = frame.Events.Where(gc => gc.IsThreadLocal).ToArray();
+        Assert.NotEmpty(events);
+        Assert.All(events, gc =>
+        {
+            Assert.Equal(0, gc.Generation);
+            Assert.Equal(0, gc.PauseMilliseconds);
+            Assert.Equal(0, gc.SuspendMilliseconds);
+            Assert.Equal(gc.ThreadLocal!.DurationNanoseconds / 1_000_000, gc.DurationMilliseconds);
+            Assert.Equal(gc.ThreadLocal.EscapedBytesBefore.HasValue, gc.ThreadLocal.EscapedBytesAfter.HasValue);
+        });
+        Assert.True(frame.GcCounts!.Gen0 >= events.Length);
+        Assert.Equal(0, frame.Health!.DiscardedCollections);
+    }
+
     private static GcEvent Local(double at = 2, bool collected = true) => new(7, at, 0, "ThreadLocal", collected ? "Collected" : "Skipped", 0.0125, 0, 0,
         new ThreadLocalGcInfo(3, 123, collected, 2097152, 524288, 12500));
 
@@ -97,6 +134,63 @@ public class ThreadLocalCollectionTests
     }
 
     [Fact]
+    public async Task EscapedTotalsSurviveReplayAlongsideLegacyEventsAndUpdateTheSelectedCollection()
+    {
+        var extended = Local() with
+        {
+            ThreadLocal = Local().ThreadLocal! with { EscapedBytesBefore = 65536, EscapedBytesAfter = 98304 }
+        };
+        var zero = Local(4, collected: false) with
+        {
+            ThreadLocal = Local().ThreadLocal! with { Collected = false, EscapedBytesBefore = 0, EscapedBytesAfter = 0 }
+        };
+        var buffer = new LiveTelemetryBuffer();
+        buffer.GcEnd(Global(1));
+        buffer.ThreadLocalCollection(extended);
+        buffer.ThreadLocalCollection(Local(3));
+        buffer.ThreadLocalCollection(zero);
+
+        // Old recordings omit these properties entirely. Keep the existing schema
+        // readable while newer records in the same history carry their totals.
+        var document = JsonNode.Parse(SessionStorage.Write(Save(buffer.Read(5))))!;
+        var oldEvent = document["Collections"]!.AsArray().Single(node => node!["EndSeconds"]!.GetValue<double>() == 3)!;
+        var oldInfo = oldEvent["ThreadLocal"]!.AsObject();
+        oldInfo.Remove("EscapedBytesBefore");
+        oldInfo.Remove("EscapedBytesAfter");
+        await using var vm = new MainViewModel();
+        await vm.ImportSessionAsync(document.ToJsonString());
+        var notified = new HashSet<string?>();
+        vm.PropertyChanged += (_, args) => notified.Add(args.PropertyName);
+        vm.SelectedEvent = vm.EventLog.Single(gc => gc.EndSeconds == 2);
+        Assert.True(vm.HasEventEscapedBytes);
+        Assert.Equal("64.0 KiB", vm.EventEscapedBefore);
+        Assert.Equal("96.0 KiB", vm.EventEscapedAfter);
+        Assert.Equal("2.0 MiB", vm.EventBefore);
+        Assert.Equal("—", vm.EventPause);
+        Assert.Contains(nameof(vm.HasEventEscapedBytes), notified);
+        Assert.Contains(nameof(vm.EventEscapedBefore), notified);
+        Assert.Contains(nameof(vm.EventEscapedAfter), notified);
+
+        vm.SelectedEvent = vm.EventLog.Single(gc => gc.EndSeconds == 3);
+        Assert.False(vm.HasEventEscapedBytes);
+        Assert.Equal("—", vm.EventEscapedBefore);
+        Assert.Equal("—", vm.EventEscapedAfter);
+        vm.SelectedEvent = vm.EventLog.Single(gc => gc.EndSeconds == 4);
+        Assert.True(vm.HasEventEscapedBytes);
+        Assert.Equal("0 B", vm.EventEscapedBefore);
+        Assert.Equal("0 B", vm.EventEscapedAfter);
+        vm.SelectedEvent = vm.EventLog.Single(gc => !gc.IsThreadLocal);
+        Assert.False(vm.HasEventEscapedBytes);
+
+        var exported = SessionStorage.Read(vm.ExportJson());
+        Assert.Equal(extended.ThreadLocal, exported.Collections.Single(gc => gc.EndSeconds == 2).ThreadLocal);
+        Assert.Null(exported.Collections.Single(gc => gc.EndSeconds == 3).ThreadLocal!.EscapedBytesBefore);
+        Assert.Equal(zero.ThreadLocal, exported.Collections.Single(gc => gc.EndSeconds == 4).ThreadLocal);
+        Assert.Equal(3, exported.GcCounts!.Gen0);
+        Assert.Equal("5.00 ms", vm.MaxPauseLabel);
+    }
+
+    [Fact]
     public void ImportRejectsFabricatedThreadLocalPauseOrInconsistentDuration()
     {
         var buffer = new LiveTelemetryBuffer();
@@ -106,6 +200,14 @@ public class ThreadLocalCollectionTests
         Assert.Throws<InvalidDataException>(() => SessionStorage.Read(SessionStorage.Write(session with { Collections = [Local() with { Generation = 2 }] })));
         Assert.Throws<InvalidDataException>(() => SessionStorage.Read(SessionStorage.Write(session with { Collections = [Local() with { DurationMilliseconds = 1000 }] })));
         Assert.Throws<InvalidDataException>(() => SessionStorage.Read(SessionStorage.Write(session with { GcCounts = new(-1, 0, 0) })));
+        Assert.Throws<InvalidDataException>(() => SessionStorage.Read(SessionStorage.Write(session with
+        {
+            Collections = [Local() with { ThreadLocal = Local().ThreadLocal! with { EscapedBytesBefore = 1 } }]
+        })));
+        Assert.Throws<InvalidDataException>(() => SessionStorage.Read(SessionStorage.Write(session with
+        {
+            Collections = [Local() with { ThreadLocal = Local().ThreadLocal! with { EscapedBytesAfter = 1 } }]
+        })));
     }
 
     [Fact]

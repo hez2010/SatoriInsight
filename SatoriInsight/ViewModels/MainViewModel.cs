@@ -295,7 +295,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
                 Notify(
                     nameof(EventTitle), nameof(EventReason), nameof(EventReasonTitle), nameof(EventPause), nameof(EventDuration), nameof(EventMode),
                     nameof(EventSuspend), nameof(EventBefore), nameof(EventAfter), nameof(EventPromoted), nameof(EventMemoryScope), nameof(EventBeforeTooltip),
-                    nameof(EventGenerations), nameof(HasEventGenerations), nameof(EventLatencyMode), nameof(EventLatencyModeTooltip));
+                    nameof(EventGenerations), nameof(HasEventGenerations), nameof(EventLatencyMode), nameof(EventLatencyModeTooltip),
+                    nameof(HasEventEscapedBytes), nameof(EventEscapedBefore), nameof(EventEscapedAfter));
             }
         }
     }
@@ -329,6 +330,12 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
     public string EventMemoryScope => SelectedEvent?.MemoryScope ?? "Memory";
 
     public string EventBeforeTooltip => SelectedEvent?.BeforeTooltip ?? "Size before collection.";
+
+    public bool HasEventEscapedBytes => SelectedEvent?.ThreadLocal?.HasEscapedBytes == true;
+
+    public string EventEscapedBefore => SelectedEvent?.ThreadLocal?.EscapedBeforeLabel ?? "—";
+
+    public string EventEscapedAfter => SelectedEvent?.ThreadLocal?.EscapedAfterLabel ?? "—";
 
     public IReadOnlyList<GcGenerationStats> EventGenerations => SelectedEvent?.Memory?.Generations ?? [];
 

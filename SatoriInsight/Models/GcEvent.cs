@@ -4,7 +4,18 @@ using System.Text.Json.Serialization;
 namespace SatoriInsight.Models;
 
 public sealed record ThreadLocalGcInfo(
-    int ClrInstanceId, int ThreadId, bool Collected, ulong OccupancyBefore, ulong OccupancyAfter, double DurationNanoseconds);
+    int ClrInstanceId, int ThreadId, bool Collected, ulong OccupancyBefore, ulong OccupancyAfter, double DurationNanoseconds,
+    ulong? EscapedBytesBefore = null, ulong? EscapedBytesAfter = null)
+{
+    [JsonIgnore]
+    public bool HasEscapedBytes => EscapedBytesBefore.HasValue && EscapedBytesAfter.HasValue;
+
+    [JsonIgnore]
+    public string EscapedBeforeLabel => EscapedBytesBefore is { } bytes ? Format.Bytes((double)bytes) : "—";
+
+    [JsonIgnore]
+    public string EscapedAfterLabel => EscapedBytesAfter is { } bytes ? Format.Bytes((double)bytes) : "—";
+}
 
 public sealed record GcGenerationStats(string Generation, long? BeforeBytes, long? AfterBytes, long? PromotedBytes)
 {

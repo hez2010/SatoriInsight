@@ -413,7 +413,7 @@ public sealed class EventPipeCollector : ILiveTelemetrySession
                 Volatile.Write(ref _clockOffset, sourceAge - _clock.Elapsed.TotalSeconds);
             }
 
-            var payload = new byte[ThreadLocalGcParser.PayloadSize];
+            var payload = new byte[ThreadLocalGcParser.ExtendedPayloadSize];
             var generationRanges = new GenerationRangeCollector(_buffer);
             long lastLost = 0;
 
@@ -452,15 +452,17 @@ public sealed class EventPipeCollector : ILiveTelemetrySession
                     return;
                 }
 
-                if (data.Version != 0 || data.EventDataLength != payload.Length)
+                var payloadLength = data.EventDataLength;
+
+                if (!ThreadLocalGcParser.IsSupportedPayload(data.Version, payloadLength))
                 {
                     _buffer.ThreadLocalCollection(null);
                     return;
                 }
 
                 // Reuse the payload buffer: this event can arrive many thousands of times per second.
-                data.EventData(payload, 0, 0, payload.Length);
-                var collection = ThreadLocalGcParser.Parse(payload, data.Version, data.TimeStampRelativeMSec / 1000, data.ThreadID);
+                data.EventData(payload, 0, 0, payloadLength);
+                var collection = ThreadLocalGcParser.Parse(payload.AsSpan(0, payloadLength), data.Version, data.TimeStampRelativeMSec / 1000, data.ThreadID);
 
                 if (collection is not null && Interlocked.Exchange(ref _threadLocalObserved, 1) == 0)
                 {

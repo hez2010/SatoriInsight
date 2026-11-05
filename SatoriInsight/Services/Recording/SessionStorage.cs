@@ -83,6 +83,7 @@ public static class SessionStorage
 
             if (gc.ThreadLocal is { } local && (gc.Kind != "ThreadLocal" || gc.Generation != 0 || gc.Number > uint.MaxValue
                 || local.ClrInstanceId is < 0 or > ushort.MaxValue || local.ThreadId < 0 || !Nonnegative(local.DurationNanoseconds)
+                || local.EscapedBytesBefore.HasValue != local.EscapedBytesAfter.HasValue
                 || gc.DurationMilliseconds != local.DurationNanoseconds / 1_000_000 || gc.PauseMilliseconds != 0 || gc.SuspendMilliseconds != 0)
                 || gc.Kind == "ThreadLocal"
                 && !gc.IsThreadLocal)

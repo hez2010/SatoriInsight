@@ -114,13 +114,14 @@ static class Smoke
         var events = new[]
         {
             new GcEvent(1, 1, 1, "BackgroundGC", "AllocSmall", 3, 1, 0, Memory: new(2048, 1024, 0, false, [new("Gen1", 2048, 1024, 0)])),
-            new GcEvent(2, 2, 0, "ThreadLocal", "Collected", 1, 0, 0, new(1, 1, true, 512, 256, 1000000))
+            new GcEvent(2, 2, 0, "ThreadLocal", "Collected", 1, 0, 0, new(1, 1, true, 512, 256, 1000000, 128, 192))
         };
         var session = new SavedSession(SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 3,
             [new(1, 2, 4, 1), new(2, 3, 5, 1)], events, null, null, [], [], [], null, null,
             [new(1, 1, 1, 10 * 1048576), new(2, 2, 2, 12 * 1048576)], []);
         var json = SessionStorage.Write(session);
         Check(SessionStorage.Read(json).Collections.Length == 2, "Session round trip.");
+        Check(SessionStorage.Read(json).Collections[1].ThreadLocal?.EscapedBytesAfter == 192, "Escaped totals round trip.");
         using var stream = new MemoryStream();
         SessionStorage.WriteAsync(stream, session, default).GetAwaiter().GetResult();
         stream.Position = 0;
@@ -136,6 +137,8 @@ static class Smoke
             Check(model.Events.Count == 1 && model.Events[0].Number == 1, "Replay time selection.");
             model.ResetTimelineSelection();
             Check(model.Events.Count == 2, "Replay reset.");
+            model.SelectedEvent = model.EventLog.Single(gc => gc.IsThreadLocal);
+            Check(model.HasEventEscapedBytes && model.EventEscapedBefore == "128 B" && model.EventEscapedAfter == "192 B", "Escaped totals in collection details.");
         }
         finally
         {
