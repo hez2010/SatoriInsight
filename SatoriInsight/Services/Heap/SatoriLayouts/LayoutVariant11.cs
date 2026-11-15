@@ -2,8 +2,8 @@ using SatoriInsight.Models;
 
 namespace SatoriInsight.Services.Heap;
 
-// PR #147: the thread-local bitmap and movable survivor count move the object count and flags.
-internal sealed class LayoutVariant11 : LayoutVariant10
+// PR #147 (.NET 10: #149): thread-local bitmaps and movable survivor counts.
+internal class LayoutVariant11 : LayoutVariant10
 {
     public override int PullRequest => 147;
 

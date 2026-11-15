@@ -22,7 +22,13 @@ public sealed class SatoriRegionReader
     private const int MaxRegions = 65536;
     private const long ByteBudget = 16 * 1024 * 1024;
 
-    private sealed record Page(ulong Address, ulong End, ulong First, ulong Map, byte[] Bitmap, byte[] Header);
+    private sealed record Page(SatoriPageInfo Info, byte[] Bitmap, byte[] FreeBitmap, byte[] Header, int Layouts)
+    {
+        public ulong Address => Info.Address;
+        public ulong End => Info.End;
+        public ulong First => Info.FirstRegion;
+        public ulong Map => Info.RegionMap;
+    }
 
     private sealed record Region(Page Page, ulong Address, byte[] Header, SatoriRegionProbe Probe, int Layouts);
 
@@ -35,6 +41,7 @@ public sealed class SatoriRegionReader
         var queues = new Dictionary<ulong, RegionQueueKind>();
         var skipped = 0;
         var complete = true;
+        var foundPage = false;
         GCLatencyMode? latencyMode = null;
         bool Read(ulong address, Span<byte> destination)
         {
@@ -95,7 +102,7 @@ public sealed class SatoriRegionReader
 
                 for (var index = 0; index < SatoriLayouts.All.Length; index++)
                 {
-                    if (SatoriLayouts.All[index].Read(probe) is not null)
+                    if ((page.Layouts & (1 << index)) != 0 && SatoriLayouts.All[index].Read(probe) is not null)
                     {
                         candidates |= 1 << index;
                     }
@@ -128,7 +135,7 @@ public sealed class SatoriRegionReader
                     throw new SamplingBudgetException();
                 }
 
-                if (range.Size < 64 || range.Address > ulong.MaxValue - range.Size || range.Address > ulong.MaxValue - PageSize)
+                if (range.Size < SatoriPageProbe.HeaderSize || range.Address > ulong.MaxValue - range.Size || range.Address > ulong.MaxValue - PageSize)
                 {
                     continue;
                 }
@@ -136,14 +143,14 @@ public sealed class SatoriRegionReader
                 var end = range.Address + range.Size;
                 var candidate = (range.Address + PageSize - 1) & ~(PageSize - 1);
 
-                for (; candidate < end && end - candidate >= 64; candidate += PageSize)
+                for (; candidate < end && end - candidate >= SatoriPageProbe.HeaderSize; candidate += PageSize)
                 {
                     if (candidate < coveredUntil)
                     {
                         continue;
                     }
 
-                    var header = new byte[64];
+                    var header = new byte[SatoriPageProbe.HeaderSize];
 
                     if (!Read(candidate, header))
                     {
@@ -152,7 +159,7 @@ public sealed class SatoriRegionReader
                         continue;
                     }
 
-                    var repeatedHeader = new byte[64];
+                    var repeatedHeader = new byte[SatoriPageProbe.HeaderSize];
 
                     if (!Read(candidate, repeatedHeader) || !header.AsSpan(8).SequenceEqual(repeatedHeader.AsSpan(8)))
                     {
@@ -161,36 +168,40 @@ public sealed class SatoriRegionReader
                         continue;
                     }
 
-                    var pageEnd = U64(header, 8);
+                    var probe = new SatoriPageProbe(candidate, header);
+                    SatoriPageInfo? info = null;
+                    var layouts = 0;
 
-                    if (pageEnd <= candidate || pageEnd - candidate > (1UL << 40) || (pageEnd - candidate) % PageSize != 0)
+                    for (var index = 0; index < SatoriLayouts.All.Length; index++)
+                    {
+                        if (SatoriLayouts.All[index].ReadPage(probe) is { } match)
+                        {
+                            info ??= match;
+                            layouts |= 1 << index;
+                        }
+                    }
+
+                    if (info is null)
                     {
                         continue;
                     }
 
-                    var size = pageEnd - candidate;
-                    var first = U64(header, 24);
-                    var map = U64(header, 56);
-                    // These relationships distinguish a page header from ordinary aligned memory.
-                    if (first != candidate + size / 512 || U64(header, 40) != size / 512 || map != candidate + 128 + size / (RegionSize / 2) * 2
-                        || U64(header, 32) == 0 || first >= pageEnd || first % RegionSize != 0 || map + size / RegionSize > first)
-                    {
-                        continue;
-                    }
+                    foundPage = true;
+                    coveredUntil = info.End;
+                    var bitmap = new byte[info.RegionCount];
+                    var freeBitmap = new byte[info.FreeBitmapAddress.HasValue ? info.RegionCount / 8 : 0];
 
-                    var bitmap = new byte[checked((int)(size / RegionSize))];
-                    var page = new Page(candidate, pageEnd, first, map, bitmap, header);
-                    pages.Add(page);
-                    coveredUntil = pageEnd;
-
-                    if (!Read(map, bitmap))
+                    if (!Read(info.RegionMap, bitmap) || info.FreeBitmapAddress is { } free && !Read(free, freeBitmap))
                     {
                         complete = false;
                         skipped++;
                         continue;
                     }
 
-                    for (var i = (int)((first - candidate) / RegionSize); i < bitmap.Length; i++)
+                    var page = new Page(info, bitmap, freeBitmap, header, layouts);
+                    pages.Add(page);
+
+                    for (var i = (int)((info.FirstRegion - candidate) / RegionSize); i < bitmap.Length; i++)
                     {
                         if (bitmap[i] != 1)
                         {
@@ -217,36 +228,36 @@ public sealed class SatoriRegionReader
                 }
             }
 
-            if (pages.Count == 0)
+            if (!foundPage)
             {
                 return Result(false, []);
-            }
-
-            if (regions.Count == 0)
-            {
-                return Result(true, [], "No supported, stable Satori region layout was found. Try capturing again.");
             }
 
             // Validate each region against the final map. A split elsewhere on the
             // page must not discard unrelated regions. Partial passes retain old data.
             var pageRegions = regions.ToLookup(region => region.Page.Address);
             var stableRegions = new List<Region>();
+            var stablePages = new List<Page>();
             var output = new List<HeapRegion>();
 
             foreach (var page in pages)
             {
                 var bitmap = new byte[page.Bitmap.Length];
-                var header = new byte[64];
+                var freeBitmap = new byte[page.FreeBitmap.Length];
+                var header = new byte[SatoriPageProbe.HeaderSize];
                 var members = pageRegions[page.Address];
 
-                if (!Read(page.Map, bitmap) || !Read(page.Address, header) || !header.AsSpan(8).SequenceEqual(page.Header.AsSpan(8)))
+                if (!Read(page.Map, bitmap)
+                    || page.Info.FreeBitmapAddress is { } free && !Read(free, freeBitmap)
+                    || !Read(page.Address, header) || !header.AsSpan(8).SequenceEqual(page.Header.AsSpan(8)))
                 {
                     complete = false;
                     skipped += members.Count();
                     continue;
                 }
 
-                complete &= bitmap.AsSpan().SequenceEqual(page.Bitmap);
+                stablePages.Add(page);
+                complete &= bitmap.AsSpan().SequenceEqual(page.Bitmap) && freeBitmap.AsSpan().SequenceEqual(page.FreeBitmap);
                 var boundary = page.First;
                 var geometry = new byte[16];
 
@@ -260,7 +271,9 @@ public sealed class SatoriRegionReader
 
                     if (region.Address < boundary || range[0] != 1 || range[1..].Contains((byte)1) || range.Contains((byte)0)
                         || !range.SequenceEqual(page.Bitmap.AsSpan(firstIndex, range.Length))
-                        || (endIndex < bitmap.Length && bitmap[endIndex] != 1)
+                        || page.Info.ContainsFreeGranules(page.FreeBitmap, firstIndex, range.Length)
+                        || page.Info.ContainsFreeGranules(freeBitmap, firstIndex, range.Length)
+                        || (endIndex < bitmap.Length && !page.Info.IsRegionEnd(bitmap[endIndex]))
                         || !Read(region.Address + 24, geometry) || !geometry.AsSpan().SequenceEqual(h.AsSpan(24, geometry.Length)))
                     {
                         complete = false;
@@ -268,23 +281,29 @@ public sealed class SatoriRegionReader
                         continue;
                     }
 
-                    complete &= region.Address == boundary;
+                    var boundaryIndex = (int)((boundary - page.Address) / RegionSize);
+                    complete &= page.Info.IsFreeRange(bitmap, freeBitmap, boundaryIndex, firstIndex - boundaryIndex);
                     boundary = end;
                     stableRegions.Add(region);
                 }
 
-                complete &= boundary == page.End;
+                var lastIndex = (int)((boundary - page.Address) / RegionSize);
+                complete &= page.Info.IsFreeRange(bitmap, freeBitmap, lastIndex, bitmap.Length - lastIndex);
             }
 
             var heapModes = new List<GCLatencyMode?>();
 
-            foreach (var heapRegions in stableRegions.GroupBy(region => U64(region.Page.Header, 32)))
+            var regionsByHeap = stableRegions.ToLookup(region => region.Page.Info.Heap);
+
+            foreach (var heapPages in stablePages.GroupBy(page => page.Info.Heap))
             {
                 // Use one interpretation for the whole heap, including other pages.
                 // A changing or incompatible region must not silently select its own
                 // unrelated layout. No candidate is cached across samples/processes.
-                var candidates = heapRegions.Aggregate(SatoriLayouts.AllMask, (mask, region) => mask & region.Layouts);
-                var heap = new SatoriHeapProbe(heapRegions.Key, memory.Architecture, Read);
+                var heapRegions = regionsByHeap[heapPages.Key];
+                var candidates = heapPages.Aggregate(SatoriLayouts.AllMask, (mask, page) => mask & page.Layouts);
+                candidates = heapRegions.Aggregate(candidates, (mask, region) => mask & region.Layouts);
+                var heap = new SatoriHeapProbe(heapPages.Key, memory.Architecture, Read);
                 var matched = 0;
                 var modes = new GCLatencyMode?[SatoriLayouts.All.Length];
 
@@ -326,14 +345,14 @@ public sealed class SatoriRegionReader
                 }
             }
 
-            if (output.Count == 0)
-            {
-                return Result(true, [], "No supported, consistent Satori region layout was found. Try capturing again.");
-            }
-
             if (heapModes.Distinct().Count() == 1)
             {
                 latencyMode = heapModes[0];
+            }
+
+            if (output.Count == 0 && (!complete || stablePages.Count == 0))
+            {
+                return Result(true, [], "No supported, consistent Satori region layout was found. Try capturing again.");
             }
 
             return Result(true, output.ToArray());
@@ -341,7 +360,7 @@ public sealed class SatoriRegionReader
         catch (SamplingBudgetException)
         {
             complete = false;
-            return Result(pages.Count > 0, [], "The map could not be fully refreshed. Previous data is still shown.");
+            return Result(foundPage, [], "The map could not be fully refreshed. Previous data is still shown.");
         }
     }
 

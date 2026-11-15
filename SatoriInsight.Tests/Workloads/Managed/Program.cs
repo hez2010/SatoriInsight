@@ -23,6 +23,7 @@ var large = new byte[1024 * 1024];
 var queue = new Queue<byte[]>();
 var fragmented = new List<byte[]?>();
 var generations = new List<byte[]>();
+var heldRegion = default(System.Runtime.InteropServices.GCHandle);
 using var stop = new CancellationTokenSource();
 var allocation = Task.Run(async () =>
 {
@@ -87,6 +88,18 @@ while (await Console.In.ReadLineAsync() is { } command && command != "exit")
         fragmented.Add(new byte[40 * 1024 * 1024]);
     }
 
+    if (command == "hold-region")
+    {
+        heldRegion = HoldRegion();
+    }
+
+    if (command == "release-region")
+    {
+        heldRegion.Free();
+        GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
+        Console.WriteLine("REGION_RELEASED");
+    }
+
     if (command == "generations")
     {
         GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
@@ -120,7 +133,21 @@ while (await Console.In.ReadLineAsync() is { } command && command != "exit")
 
 stop.Cancel();
 await allocation;
+if (heldRegion.IsAllocated)
+{
+    heldRegion.Free();
+}
+
 GC.KeepAlive(pinned);
 GC.KeepAlive(large);
 GC.KeepAlive(fragmented);
 GC.KeepAlive(generations);
+
+[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+static System.Runtime.InteropServices.GCHandle HoldRegion()
+{
+    var handle = System.Runtime.InteropServices.GCHandle.Alloc(new byte[40 * 1024 * 1024], System.Runtime.InteropServices.GCHandleType.Pinned);
+    GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
+    Console.WriteLine($"REGION {handle.AddrOfPinnedObject():X}");
+    return handle;
+}

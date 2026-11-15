@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime;
 using System.Text.Json;
 using Microsoft.Diagnostics.Runtime;
@@ -87,6 +88,70 @@ public class RegionMetadataTests
     public static bool SupportsRegionTarget => OperatingSystem.IsWindows();
 
     public static bool SupportsLiveRegionTarget => OperatingSystem.IsWindows() || OperatingSystem.IsLinux();
+
+    [Fact(Timeout = 30000, SkipUnless = nameof(SupportsLiveRegionTarget), Skip = "Requires Windows or Linux process inspection.")]
+    public async Task ReleasedLargeRegionsDoNotRemainInCompleteSamples()
+    {
+        using var workload = await TestWorkload.StartSatoriAsync();
+        var process = workload.Process;
+        var token = TestContext.Current.CancellationToken;
+        await process.StandardInput.WriteLineAsync("hold-region");
+        var line = await process.StandardOutput.ReadLineAsync(token);
+        Assert.StartsWith("REGION ", line);
+        var address = ulong.Parse(line![7..], NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture);
+        using var target = DataTarget.AttachToProcess(process.Id, suspend: false);
+        using var memory = new ClrRegionMemory(target.DataReader, useProcessRanges: true);
+        var reader = new SatoriRegionReader();
+
+        async Task<RegionReadResult> ReadCompleteSample()
+        {
+            var timer = Stopwatch.StartNew();
+            RegionReadResult sample;
+
+            do
+            {
+                target.DataReader.FlushCachedData();
+                sample = reader.Read(memory, token);
+
+                if (sample.Complete)
+                {
+                    break;
+                }
+
+                await Task.Delay(100, token);
+            }
+            while (timer.Elapsed < TimeSpan.FromSeconds(5));
+
+            Assert.True(sample.Recognized, sample.Error);
+            Assert.True(sample.Complete, sample.Error);
+            return sample;
+        }
+
+        var before = await ReadCompleteSample();
+        var held = Assert.Single(before.Regions, region => region.StartAddress <= address && address < region.EndAddress);
+        Assert.Equal(HeapGeneration.Gen2, held.DisplayGeneration);
+        await process.StandardInput.WriteLineAsync("release-region");
+        Assert.Equal("REGION_RELEASED", await process.StandardOutput.ReadLineAsync(token));
+        var timer = Stopwatch.StartNew();
+        RegionReadResult after;
+
+        do
+        {
+            after = await ReadCompleteSample();
+
+            if (!after.Regions.Any(region => region.StartAddress == held.StartAddress
+                && region.EndAddress == held.EndAddress && region.DisplayGeneration == HeapGeneration.Gen2))
+            {
+                break;
+            }
+
+            await Task.Delay(100, token);
+        }
+        while (timer.Elapsed < TimeSpan.FromSeconds(5));
+
+        Assert.DoesNotContain(after.Regions, region => region.StartAddress == held.StartAddress
+            && region.EndAddress == held.EndAddress && region.DisplayGeneration == HeapGeneration.Gen2);
+    }
 
     [Theory(Timeout = 30000, SkipUnless = nameof(SupportsLiveRegionTarget), Skip = "Requires Windows or Linux process inspection.")]
     [InlineData(GCLatencyMode.Interactive)]
