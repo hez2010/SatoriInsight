@@ -41,7 +41,7 @@ public class ThreadLocalCollectionTests
             Assert.Equal(gc.ThreadLocal!.DurationNanoseconds / 1_000_000, gc.DurationMilliseconds);
             Assert.Equal(gc.ThreadLocal.EscapedBytesBefore.HasValue, gc.ThreadLocal.EscapedBytesAfter.HasValue);
         });
-        Assert.True(frame.GcCounts!.Gen0 >= events.Length);
+        Assert.True(frame.GcCounts!.Gen0 >= events.Count(gc => gc.HasCollectionIndex));
         Assert.Equal(0, frame.Health!.DiscardedCollections);
     }
 

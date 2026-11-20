@@ -338,6 +338,47 @@
                                         </StackPanel>
                                     </Grid>
                                 </Border>
+                                <ContentControl Content="{Binding SelectedEvent.ThreadLocal.Request}"
+                                    IsVisible="{Binding !!SelectedEvent.ThreadLocal.Request}" HorizontalContentAlignment="Stretch">
+                                    <ContentControl.ContentTemplate>
+                                        <DataTemplate x:DataType="models:ThreadLocalRequestInfo">
+                                            <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="16" RowSpacing="12">
+                                                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="5">
+                                                    <TextBlock Text="TRIGGER" Classes="eyebrow" />
+                                                    <TextBlock Text="{Binding TriggerLabel}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="5">
+                                                    <TextBlock Text="ALLOCATION RETRY" Classes="eyebrow" />
+                                                    <TextBlock Text="{Binding RetryLabel}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="0" Grid.Column="2" Spacing="5" ToolTip.Tip="Whether a thread-local collection has been productive since tracking began for this region.">
+                                                    <TextBlock Text="TRACKING PRODUCTIVE" Classes="eyebrow" />
+                                                    <TextBlock Text="{Binding TrackingProductive}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="0" Grid.Column="3" Spacing="5">
+                                                    <TextBlock Text="REGION" Classes="eyebrow" />
+                                                    <TextBlock Text="{Binding RegionLabel}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="1" Grid.Column="0" Spacing="5">
+                                                    <TextBlock Text="REQUESTED" Classes="eyebrow" />
+                                                    <TextBlock Text="{Binding RequestedLabel}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="5">
+                                                    <TextBlock Text="ALLOCATION PROGRESS" Classes="eyebrow" />
+                                                    <TextBlock Text="{Binding ProgressLabel}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="1" Grid.Column="2" Spacing="5">
+                                                    <TextBlock Text="USABLE BEFORE" Classes="eyebrow" />
+                                                    <TextBlock Text="{Binding UsableBeforeLabel}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="1" Grid.Column="3" Spacing="5">
+                                                    <TextBlock Text="USABLE AFTER" Classes="eyebrow" />
+                                                    <TextBlock Text="{Binding UsableAfterLabel}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ContentControl.ContentTemplate>
+                                </ContentControl>
                                 <DataGrid IsVisible="{Binding HasEventGenerations}" ItemsSource="{Binding EventGenerations}"
                                     AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="220">
                                     <DataGrid.Columns>

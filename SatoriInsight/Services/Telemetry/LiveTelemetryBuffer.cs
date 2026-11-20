@@ -89,7 +89,11 @@ public sealed partial class LiveTelemetryBuffer
             }
 
             Observe(gc.EndSeconds);
-            _gen0Count++;
+            if (gc.HasCollectionIndex)
+            {
+                _gen0Count++;
+            }
+
             _events.Add(WithSampledLatencyMode(gc));
         }
     }

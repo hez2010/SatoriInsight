@@ -499,7 +499,7 @@ public sealed partial class MainViewModel
         }
         else if (!IsPaused)
         {
-            Status = $"{ActiveProcess!.DisplayLabel} · {_frame.Events.Count:N0} collections";
+            Status = $"{ActiveProcess!.DisplayLabel} · {_frame.Events.Count:N0} GC events";
         }
 
         NotifyConnection();

@@ -267,7 +267,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
     public string PauseCountLabel => $"{PauseEvents.Count:N0} pauses · milliseconds";
 
     private GcCollectionCounts? DisplayCounts => _frame.GcCounts ?? (_frame.Events.Count == 0 ? null : new(
-        _frame.Events.LongCount(e => e.Generation == 0), _frame.Events.LongCount(e => e.Generation == 1), _frame.Events.LongCount(e => e.Generation == 2)));
+        _frame.Events.LongCount(e => e.Generation == 0 && e.HasCollectionIndex), _frame.Events.LongCount(e => e.Generation == 1), _frame.Events.LongCount(e => e.Generation == 2)));
 
     public string Gen0CountLabel => DisplayCounts?.Gen0.ToString("N0") ?? "—";
 
@@ -302,7 +302,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
     }
 
     public string EventTitle => SelectedEvent is { } gc
-        ? $"GC {gc.NumberLabel} · {gc.GenerationLabel}" + (gc.ThreadLocal is { } local ? $" · Thread {local.ThreadId}" : "")
+        ? (gc.HasCollectionIndex ? $"GC {gc.NumberLabel}" : "Thread-local request") + $" · {gc.GenerationLabel}" + (gc.ThreadLocal is { } local ? $" · Thread {local.ThreadId}" : "")
         : "Select a collection";
 
     public string EventReason => SelectedEvent?.Reason ?? "—";
@@ -398,6 +398,11 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
 
             foreach (var gc in _visibleEvents)
             {
+                if (!gc.HasCollectionIndex)
+                {
+                    continue;
+                }
+
                 if (gc.Generation == 0)
                 {
                     gen0++;

@@ -413,7 +413,7 @@ public sealed class EventPipeCollector : ILiveTelemetrySession
                 Volatile.Write(ref _clockOffset, sourceAge - _clock.Elapsed.TotalSeconds);
             }
 
-            var payload = new byte[ThreadLocalGcParser.ExtendedPayloadSize];
+            var payload = new byte[ThreadLocalGcParser.RequestPayloadSize];
             var generationRanges = new GenerationRangeCollector(_buffer);
             long lastLost = 0;
 

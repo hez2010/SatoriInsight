@@ -5,7 +5,8 @@ namespace SatoriInsight.Models;
 
 public sealed record ThreadLocalGcInfo(
     int ClrInstanceId, int ThreadId, bool Collected, ulong OccupancyBefore, ulong OccupancyAfter, double DurationNanoseconds,
-    ulong? EscapedBytesBefore = null, ulong? EscapedBytesAfter = null)
+    ulong? EscapedBytesBefore = null, ulong? EscapedBytesAfter = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ThreadLocalRequestInfo? Request = null)
 {
     [JsonIgnore]
     public bool HasEscapedBytes => EscapedBytesBefore.HasValue && EscapedBytesAfter.HasValue;
@@ -40,7 +41,10 @@ public sealed record GcEvent(
     public bool IsThreadLocal => ThreadLocal is not null;
 
     [JsonIgnore]
-    public string NumberLabel => $"#{Number}";
+    public bool HasCollectionIndex => ThreadLocal?.Request?.Outcome is not (ThreadLocalOutcome.EscapedLimit or ThreadLocalOutcome.InsufficientProgress);
+
+    [JsonIgnore]
+    public string NumberLabel => HasCollectionIndex ? $"#{Number}" : "—";
 
     [JsonIgnore]
     public string TimeLabel => TimeSpan.FromSeconds(EndSeconds).ToString(@"mm\:ss\.fff");
