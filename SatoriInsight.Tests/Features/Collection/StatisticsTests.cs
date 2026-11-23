@@ -34,6 +34,14 @@ public class StatisticsTests
     public void PercentilesUseNearestRank(double percentile, double expected) => Assert.Equal(expected, GcStatistics.Percentile(Events(4, 1, 3, 2), percentile));
 
     [Fact]
+    public void FractionalPercentileAdvancesOnlyAboveTheRankBoundary()
+    {
+        var events = Events(Enumerable.Range(1, 250).Select(i => (double)i).ToArray());
+        Assert.Equal(161, GcStatistics.Percentile(events, 64.4));
+        Assert.Equal(162, GcStatistics.Percentile(events, Math.BitIncrement(64.4)));
+    }
+
+    [Fact]
     public void PausePercentageUsesRuntimeCounterNotPotentiallyOverlappingGcTotals()
     {
         Assert.Equal(1, GcStatistics.CounterPausePercent([new(1, 1, 15), new(2, 1, 5)]));

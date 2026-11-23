@@ -38,7 +38,20 @@ public static class GcStatistics
         }
 
         var values = Values(events).Order().ToArray();
-        return values.Length == 0 ? 0 : values[Math.Max(0, (int)Math.Ceiling((decimal)percentile * values.Length / 100m) - 1)];
+
+        if (values.Length == 0)
+        {
+            return 0;
+        }
+
+        var rank = Math.Max(1, (int)(percentile * values.Length / 100));
+        // Compare cumulative percentages in the same units as the requested percentile.
+        if (100d * rank / values.Length < percentile)
+        {
+            rank++;
+        }
+
+        return values[rank - 1];
     }
 
     // The runtime counter avoids summing overlapping background/foreground GC totals.

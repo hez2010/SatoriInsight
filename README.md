@@ -45,7 +45,7 @@ Download the package for your operating system and architecture from the [latest
 
 ## Build and run
 
-Install the .NET 10 SDK. Full functionality requires an Avalonia Pro license. You can still build and run the application without a license, but the memory chart and pause histogram show placeholders, and release notes appear as plain text. GC statistics and collection timeline selection remain available.
+Install the .NET SDK specified in `global.json`. Full functionality requires an Avalonia Pro license. You can still build and run the application without a license, but the memory chart and pause histogram show placeholders, and release notes appear as plain text. GC statistics and collection timeline selection remain available.
 
 ```powershell
 dotnet run --project SatoriInsight/SatoriInsight.csproj -c Release
@@ -74,7 +74,5 @@ See the [user guide](docs/user-guide.md) for the complete workflow and [troubles
 ## Verify a source build
 
 ```powershell
-dotnet test SatoriInsight.slnx -c Release
+dotnet test --solution SatoriInsight.slnx -c Release
 ```
-
-Running the tests requires the .NET 10 runtime.

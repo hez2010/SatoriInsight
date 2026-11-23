@@ -31,10 +31,10 @@ jobs:
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6.0.0
         with:
-          dotnet-version: 10.0.x
+          global-json-file: global.json
 
       - name: Run tests
-        run: dotnet test SatoriInsight.slnx -c Release
+        run: dotnet test --solution SatoriInsight.slnx -c Release
 
   build:
     name: ${{ matrix.rid }}
