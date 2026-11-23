@@ -56,7 +56,8 @@ public static class HeapAnalysis
     {
         var before = baseline.Types.ToDictionary(t => t.Name);
         var after = current.Types.ToDictionary(t => t.Name);
-        return before.Keys.Union(after.Keys).Select(name => new TypeGrowth(
-            name, before.GetValueOrDefault(name)?.Bytes ?? 0, after.GetValueOrDefault(name)?.Bytes ?? 0, after.GetValueOrDefault(name)?.Count ?? 0)).OrderByDescending(t => t.DeltaBytes).ToArray();
+        return before.Keys.Union(after.Keys)
+            .Select(name => new TypeGrowth(before.GetValueOrDefault(name), after.GetValueOrDefault(name)))
+            .OrderByDescending(type => type.DeltaBytes).ToArray();
     }
 }

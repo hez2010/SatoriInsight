@@ -9,16 +9,15 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
-    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
+    <PackageReference Include="xunit.v3" Version="4.0.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1" PrivateAssets="all" />
     <ProjectReference Include="../SatoriInsight/SatoriInsight.csproj" />
     <ProjectReference Include="Workloads/Managed/SatoriInsight.Workload.csproj" ReferenceOutputAssembly="false" />
     <Compile Include="Features/**/*.cs;Infrastructure/**/*.cs" />
   </ItemGroup>
   <Target Name="PrepareTestWorkloads" AfterTargets="Build">
-    <MSBuild Projects="$(MSBuildThisFileDirectory)Workloads/Managed/SatoriInsight.Workload.csproj"
-             Targets="GetTargetPath" Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)Workloads/Managed/SatoriInsight.Workload.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
       <Output TaskParameter="TargetOutputs" ItemName="_NetWorkload" />
     </MSBuild>
     <ItemGroup>
@@ -27,7 +26,6 @@
       </_WorkloadFiles>
     </ItemGroup>
     <Copy SourceFiles="@(_WorkloadFiles)" DestinationFiles="@(_WorkloadFiles->'%(DestinationFolder)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
-    <Exec Condition="'$(OS)' == 'Windows_NT' or $([MSBuild]::IsOSPlatform('Linux'))"
-          Command="dotnet publish &quot;$(MSBuildThisFileDirectory)Workloads/Satori/SatoriInsight.SatoriWorkload.csproj&quot; -c $(Configuration) -r $(NETCoreSdkRuntimeIdentifier) --self-contained true -p:UseSatoriGC=true -o &quot;$(TargetDir)Workloads/Satori&quot;" />
+    <Exec Condition="'$(OS)' == 'Windows_NT' or $([MSBuild]::IsOSPlatform('Linux'))" Command="dotnet publish &quot;$(MSBuildThisFileDirectory)Workloads/Satori/SatoriInsight.SatoriWorkload.csproj&quot; -c $(Configuration) -r $(NETCoreSdkRuntimeIdentifier) --self-contained true -p:UseSatoriGC=true -o &quot;$(TargetDir)Workloads/Satori&quot;" />
   </Target>
 </Project>

@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:charts="using:Avalonia.Controls.Charts"
-    xmlns:vm="using:SatoriInsight.ViewModels" x:DataType="vm:MainViewModel" x:Class="SatoriInsight.Controls.PauseHistogramView">
+    xmlns:vm="using:SatoriInsight.ViewModels" xmlns:models="using:SatoriInsight.Models" xmlns:telemetry="using:SatoriInsight.Services.Telemetry"
+    x:DataType="vm:MainViewModel" x:Class="SatoriInsight.Controls.PauseHistogramView">
     <UserControl.Styles>
         <Style Selector="TextBlock.pause-stat-label">
             <Setter Property="FontSize" Value="11" />
@@ -19,12 +20,12 @@
             <TextBlock Grid.Column="1" Text="STOP THE WORLD" Classes="eyebrow" FontSize="8" VerticalAlignment="Center" />
         </Grid>
         <TextBlock Text="{Binding PauseCountLabel}" Classes="muted" FontSize="11" />
-        <Grid Height="158">
-            <charts:CartesianChart Name="PauseChart" IsVisible="{Binding HasPauses}" Height="158" ShowLegend="False" IsAnimationEnabled="False"
+        <Grid Height="158" RowDefinitions="*,24">
+            <charts:CartesianChart Name="PauseChart" IsVisible="{Binding HasPauses}" ShowLegend="False" IsAnimationEnabled="False"
                 IsTooltipEnabled="True" AxisBrush="#354052" GridLineBrush="#222C3B" LabelForeground="#8795A9" Background="Transparent"
                 DataPointClicked="PauseChart_DataPointClicked">
                 <charts:CartesianChart.HorizontalAxis>
-                    <charts:CategoryAxis LabelFontSize="9" LabelForeground="#8795A9" />
+                    <charts:CategoryAxis ShowLabels="False" />
                 </charts:CartesianChart.HorizontalAxis>
                 <charts:CartesianChart.VerticalAxis>
                     <charts:NumericalAxis Minimum="0" Maximum="{Binding HistogramMaximumCount}" MajorStep="{Binding HistogramCountStep}" LabelFontSize="9"
@@ -38,7 +39,21 @@
                     <Border Name="HistogramPlotProbe" IsHitTestVisible="False" />
                 </charts:CartesianChart.PlotAreaContent>
             </charts:CartesianChart>
-            <TextBlock IsVisible="{Binding !HasPauses}" Text="No recorded pauses" Classes="muted" FontSize="11" HorizontalAlignment="Center"
+            <Canvas Grid.RowSpan="2" IsVisible="{Binding HasPauses}">
+                <ItemsControl Canvas.Left="{Binding #HistogramPlotProbe.Bounds.X}" Canvas.Top="{Binding #HistogramPlotProbe.Bounds.Bottom}"
+                    Width="{Binding #HistogramPlotProbe.Bounds.Width}" UseLayoutRounding="False"
+                    ItemsSource="{x:Static telemetry:GcStatistics.PauseIntervals}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:PauseInterval">
+                            <Button Content="{Binding Label}" Click="PauseInterval_Click" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                Height="24" Padding="0" FontSize="10" Background="Transparent" BorderThickness="0" Foreground="{StaticResource MutedBrush}"
+                                AutomationProperties.Name="{Binding Label, StringFormat='Filter GC pauses in the {0} ms range'}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Canvas>
+            <TextBlock Grid.RowSpan="2" IsVisible="{Binding !HasPauses}" Text="No recorded pauses" Classes="muted" FontSize="11" HorizontalAlignment="Center"
                 VerticalAlignment="Center" />
         </Grid>
         <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="Auto,Auto" RowSpacing="8" Margin="0,3,0,0">
@@ -75,6 +90,6 @@
                 <TextBlock Text="{Binding MaxPauseLabel}" Classes="pause-stat-value" />
             </StackPanel>
         </Grid>
-        <TextBlock Text="Click a bar to inspect matching collections." Classes="muted" FontSize="9" />
+        <TextBlock Text="Select a bar or its range label to inspect matching collections." Classes="muted" FontSize="9" />
     </StackPanel>
 </UserControl>

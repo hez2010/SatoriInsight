@@ -14,7 +14,7 @@ public partial class MemoryHistoryView : UserControl
     private double _dragOriginX;
     private double _dragLeft;
     private double _dragWidth;
-    private double _dragMaximum;
+    private TimelineRange _dragRange;
     private double _dragStart;
     private long _lastUpdate;
     private bool _dragging;
@@ -68,6 +68,10 @@ public partial class MemoryHistoryView : UserControl
         }
     }
 
+    private void Zoom_Click(object? sender, RoutedEventArgs e) => ((MainViewModel)DataContext!).ZoomToSelection();
+
+    private void ZoomOut_Click(object? sender, RoutedEventArgs e) => ((MainViewModel)DataContext!).ZoomOutTimeline();
+
     private void SelectionPressed(object? sender, PointerPressedEventArgs e)
     {
         if (_dragging || DataContext is not MainViewModel { IsMemoryActivityView: true, HasSessionData: true } vm
@@ -107,7 +111,7 @@ public partial class MemoryHistoryView : UserControl
             return;
         }
 
-        _dragMaximum = vm.ChartMaximumSeconds;
+        _dragRange = vm.ChartRange;
         _dragOriginX = e.GetPosition(_dragTrack).X;
         _dragStart = TimeAt(_dragOriginX);
         _dragging = true;
@@ -117,7 +121,7 @@ public partial class MemoryHistoryView : UserControl
         e.Handled = true;
     }
 
-    private double TimeAt(double x) => Math.Clamp((x - _dragLeft) / _dragWidth, 0, 1) * _dragMaximum;
+    private double TimeAt(double x) => _dragRange.TimeAt((x - _dragLeft) / _dragWidth);
 
     private void UpdateSelection(PointerEventArgs e)
     {

@@ -7,8 +7,12 @@
             <Button Grid.Column="1" Name="ResetTimelineButton" Content="Reset" Click="Reset_Click" IsEnabled="{Binding HasTimelineSelection}"
                 Classes="secondary" Padding="10,5" AutomationProperties.Name="Reset timeline selection" />
         </Grid>
-        <TextBlock Text="{Binding TimelineSelectionLabel}" Classes="muted" FontSize="11"
-            ToolTip.Tip="Click a time or drag a range. Memory sizes show the end of the selected range." />
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+            <TextBlock Text="{Binding TimelineSelectionLabel}" Classes="muted" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center"
+                ToolTip.Tip="Click a time or drag a range. Memory sizes show the end of the selected range." />
+            <Button Grid.Column="1" Content="Zoom to selection" Click="Zoom_Click" IsEnabled="{Binding CanZoomToSelection}" Classes="secondary" Padding="8,3" />
+            <Button Grid.Column="2" Content="Zoom out" Click="ZoomOut_Click" IsVisible="{Binding IsTimelineZoomed}" Classes="secondary" Padding="8,3" />
+        </Grid>
         <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,2,0,0">
             <StackPanel Orientation="Horizontal" Spacing="5">
                 <Rectangle Width="12" Height="2" Fill="{StaticResource AccentBrush}" />
@@ -27,8 +31,8 @@
             <charts:CartesianChart Name="MemoryChart" IsVisible="{Binding HasHistory}" Height="110" ShowLegend="False" IsAnimationEnabled="False"
                 IsTooltipEnabled="True" AxisBrush="#354052" GridLineBrush="#222C3B" LabelForeground="#8795A9" Background="Transparent">
                 <charts:CartesianChart.HorizontalAxis>
-                    <charts:NumericalAxis Minimum="0" Maximum="{Binding ChartMaximumSeconds}" MajorStep="{Binding ChartStepSeconds}" LabelFontSize="9"
-                        LabelForeground="#8795A9" LabelFormat="0" />
+                    <charts:NumericalAxis Minimum="{Binding ChartRange.Start}" Maximum="{Binding ChartMaximumSeconds}" MajorStep="{Binding ChartStepSeconds}" LabelFontSize="9"
+                        LabelForeground="#8795A9" LabelFormat="0.#########" />
                 </charts:CartesianChart.HorizontalAxis>
                 <charts:CartesianChart.VerticalAxis>
                     <charts:NumericalAxis Minimum="0" LabelFontSize="9" LabelForeground="#8795A9" />
@@ -45,7 +49,7 @@
                     <Grid IsHitTestVisible="False">
                         <Border Name="PlotAreaProbe" />
                         <local:TimelineSelectionOverlay Start="{Binding TimelineSelectionStart}" End="{Binding TimelineSelectionEnd}"
-                            Maximum="{Binding ChartMaximumSeconds}" />
+                            Range="{Binding ChartRange}" />
                     </Grid>
                 </charts:CartesianChart.PlotAreaContent>
             </charts:CartesianChart>
@@ -54,9 +58,9 @@
         </Grid>
         <Grid Height="64">
             <local:GcTimeline Name="CollectionTimeline" Events="{Binding TimelineEvents}" SelectedEvent="{Binding SelectedEvent}"
-                EndSeconds="{Binding ChartMaximumSeconds}" />
+                Range="{Binding ChartRange}" />
             <local:TimelineSelectionOverlay Name="CollectionSelection" Start="{Binding TimelineSelectionStart}" End="{Binding TimelineSelectionEnd}"
-                Maximum="{Binding ChartMaximumSeconds}" IsHitTestVisible="False" />
+                Range="{Binding ChartRange}" IsHitTestVisible="False" />
         </Grid>
         <TextBlock Text="Click a time · drag a period · Reset to clear selection" Classes="muted" FontSize="10" HorizontalAlignment="Right" />
     </StackPanel>

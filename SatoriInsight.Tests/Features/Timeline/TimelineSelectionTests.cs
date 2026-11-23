@@ -1,5 +1,6 @@
 using SatoriInsight.Models;
 using SatoriInsight.Services.Recording;
+using SatoriInsight.Services.Telemetry;
 using SatoriInsight.ViewModels;
 using Xunit;
 
@@ -86,5 +87,56 @@ public class TimelineSelectionTests
         Assert.Equal("—", vm.AllocationLabel);
         Assert.Equal("—", vm.PausePercentLabel);
         Assert.False(vm.HasPauses);
+    }
+
+    [Fact]
+    public async Task ZoomMagnifiesTheSelectedPeriodAndKeepsAbsoluteTimesWhenSelectingAgain()
+    {
+        await using var vm = new MainViewModel();
+        await vm.ImportSessionAsync(SessionStorage.Write(Session()));
+        vm.SelectPeriod(5.25, 4.75);
+        vm.ZoomToSelection();
+        Assert.Equal(new TimelineRange(4.75, 5.25), vm.ChartRange);
+        Assert.Equal(0.5, vm.ChartRange.FractionAt(5));
+        Assert.InRange(vm.ChartStepSeconds, 0.001, 0.25);
+        Assert.Equal("30.00 ms", vm.MaxPauseLabel);
+        Assert.False(vm.CanZoomToSelection);
+
+        vm.SelectPeriod(vm.ChartRange.TimeAt(0.25), vm.ChartRange.TimeAt(0.75));
+        Assert.True(vm.CanZoomToSelection);
+        vm.ZoomToSelection();
+        Assert.Equal(new TimelineRange(4.875, 5.125), vm.ChartRange);
+        vm.ZoomOutTimeline();
+        Assert.Equal(new TimelineRange(0, 8), vm.ChartRange);
+        Assert.Equal(4.875, vm.TimelineSelectionStart);
+        Assert.Equal(5.125, vm.TimelineSelectionEnd);
+
+        vm.ZoomToSelection();
+        vm.ReplayPosition = 7;
+        Assert.False(vm.IsTimelineZoomed);
+        Assert.Equal(7, vm.TimelineSelectionEnd);
+        Assert.False(vm.CanZoomToSelection);
+    }
+
+    [Fact]
+    public async Task PauseIntervalFiltersSparseAndEmptyBinsWithinTheSelectedPeriod()
+    {
+        await using var vm = new MainViewModel();
+        await vm.ImportSessionAsync(SessionStorage.Write(Session()));
+        vm.SelectPeriod(1.5, 3.5);
+        vm.ZoomToSelection();
+        vm.GenerationFilterIndex = 3;
+        vm.FilterToPauseBin(GcStatistics.PauseIntervals.Single(interval => interval.Contains(2)));
+        var gc = Assert.Single(vm.EventLog);
+        Assert.Equal(2, gc.Number);
+        Assert.Equal(gc, vm.SelectedEvent);
+        Assert.Equal(new TimelineRange(1.5, 3.5), vm.ChartRange);
+        Assert.Equal(1.5, vm.TimelineSelectionStart);
+        Assert.Equal(3.5, vm.TimelineSelectionEnd);
+
+        vm.FilterToPauseBin(GcStatistics.PauseIntervals.Single(interval => interval.Contains(50)));
+        Assert.Empty(vm.EventLog);
+        Assert.Null(vm.SelectedEvent);
+        Assert.True(vm.HasPauseFilter);
     }
 }

@@ -14,7 +14,7 @@ The overview shows heap sizes, allocation rate and its recorded maximum, generat
 
 **GC mode** identifies the collector and its last reported latency mode. Generation sizes reflect reported measurements and can lag current allocation. Unavailable measurements appear as **—** or **Unknown**.
 
-Select a collection to inspect its timing, latency mode, and before/after memory sizes. Filter by generation or click a histogram bar to select a pause interval. A latency mode prefixed with **≈** is the last sampled mode before the collection completed; it may have changed between samples.
+Select a collection to inspect its timing, latency mode, and before/after memory sizes. Filter by generation or choose a bar or its x-axis label in **GC pause distribution** to show collections in that pause interval. A latency mode prefixed with **≈** is the last sampled mode before the collection completed; it may have changed between samples.
 
 The histogram and pause statistics describe process-wide GC pauses. Thread-local collections count toward Gen0 activity but are excluded from pause statistics. Collection duration and suspension latency are separate measurements.
 
@@ -24,7 +24,7 @@ Click **Heap & collection timeline** to inspect a time point, or drag across it 
 
 A point shows the measurements available at that time. A period shows collections and process-time statistics within the interval, with memory values and GC mode at its end. The allocation maximum follows the selected time or period.
 
-Choose **Reset** to clear the selection. **Pause view** freezes the display while recording continues.
+Choose **Zoom to selection** to expand a period across the timeline. You can select a smaller period and zoom again. **Zoom out** shows the full timeline and keeps your selection. **Reset** clears the selection and zoom. **Pause view** freezes the display while recording continues.
 
 ## Read the region map
 
@@ -44,7 +44,9 @@ Select a region to filter its types and objects and see its layout and free spac
 
 Selecting an object displays its details, references, and root path alongside the lists. Double-click a reference or root-path entry, or press Enter, to inspect that object. **Back** returns from a followed reference. A missing root path in a partial capture does not prove the object is unrooted.
 
-Expand **Compare captures** and choose **Baseline** and **Compare with** to compare shallow memory usage by type. Both captures must contain object data. These values are not retained sizes.
+Expand **Compare captures** and choose **Baseline** and **Compare with** to see how each type’s captured instance count and shallow size changed. Shallow size counts the bytes occupied by the instances themselves. Both captures must contain object data. Each picker shows the captured object count and any coverage warnings. Partial captures can undercount a type on either side.
+
+Choose **Inspect instances** on a row to see that type’s objects in the comparison capture. For a type found only in the baseline, choose **Inspect baseline**. Both actions keep the comparison pair in place so you can return to the table and investigate another type.
 
 Region-only captures show the map and region details. Keep up to four captures at once; use **Remove capture** to discard those you no longer need.
 

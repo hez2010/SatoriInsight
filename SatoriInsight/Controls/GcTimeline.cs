@@ -11,7 +11,7 @@ public sealed class GcTimeline : Control
 {
     public static readonly StyledProperty<IReadOnlyList<GcEvent>?> EventsProperty = AvaloniaProperty.Register<GcTimeline, IReadOnlyList<GcEvent>?>(nameof(Events));
     public static readonly StyledProperty<GcEvent?> SelectedEventProperty = AvaloniaProperty.Register<GcTimeline, GcEvent?>(nameof(SelectedEvent), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
-    public static readonly StyledProperty<double> EndSecondsProperty = AvaloniaProperty.Register<GcTimeline, double>(nameof(EndSeconds), 120);
+    public static readonly StyledProperty<TimelineRange> RangeProperty = AvaloniaProperty.Register<GcTimeline, TimelineRange>(nameof(Range), new(0, 1));
     public static readonly StyledProperty<double> LeftInsetProperty = AvaloniaProperty.Register<GcTimeline, double>(nameof(LeftInset), 49);
     public static readonly StyledProperty<double> RightInsetProperty = AvaloniaProperty.Register<GcTimeline, double>(nameof(RightInset), 0);
 
@@ -27,10 +27,10 @@ public sealed class GcTimeline : Control
         set => SetValue(SelectedEventProperty, value);
     }
 
-    public double EndSeconds
+    public TimelineRange Range
     {
-        get => GetValue(EndSecondsProperty);
-        set => SetValue(EndSecondsProperty, value);
+        get => GetValue(RangeProperty);
+        set => SetValue(RangeProperty, value);
     }
 
     public double LeftInset
@@ -49,7 +49,7 @@ public sealed class GcTimeline : Control
 
     private readonly List<(Rect Rect, GcEvent Event)> _marks = [];
 
-    static GcTimeline() => AffectsRender<GcTimeline>(EventsProperty, SelectedEventProperty, EndSecondsProperty, LeftInsetProperty, RightInsetProperty);
+    static GcTimeline() => AffectsRender<GcTimeline>(EventsProperty, SelectedEventProperty, RangeProperty, LeftInsetProperty, RightInsetProperty);
 
     public GcTimeline()
     {
@@ -63,7 +63,7 @@ public sealed class GcTimeline : Control
         _marks.Clear();
         context.FillRectangle(Brushes.Transparent, new Rect(Bounds.Size));
         var width = Math.Max(1, Bounds.Width - LeftInset - RightInset);
-        var duration = Math.Max(1, EndSeconds);
+        var range = Range;
         var pixelCount = Math.Max(1, (int)Math.Ceiling(width));
         var drawn = new bool[pixelCount * 3];
         IBrush[] brushes =
@@ -83,13 +83,12 @@ public sealed class GcTimeline : Control
 
         foreach (var gc in Events ?? [])
         {
-            var x = LeftInset + gc.EndSeconds / duration * width;
-
-            if (x < LeftInset || x > Bounds.Width - RightInset)
+            if (!range.Contains(gc.EndSeconds))
             {
                 continue;
             }
 
+            var x = LeftInset + Math.Min(range.FractionAt(gc.EndSeconds) * width, width - 1);
             var pixel = gc.Generation * pixelCount + Math.Clamp((int)(x - LeftInset), 0, pixelCount - 1);
 
             if (drawn[pixel] && SelectedEvent != gc)
@@ -99,7 +98,7 @@ public sealed class GcTimeline : Control
 
             drawn[pixel] = true;
             var rect = new Rect(x, 3 + gc.Generation * 21, Math.Min(
-                gc.IsThreadLocal ? 3 : Math.Clamp(gc.PauseMilliseconds / 2, 3, 12), Bounds.Width - RightInset - x), 15);
+                gc.IsThreadLocal ? 3 : Math.Clamp(gc.PauseMilliseconds / 2, 3, 12), LeftInset + width - x), 15);
             context.DrawRectangle(brushes[gc.Generation], null, rect, 2, 2);
 
             if (SelectedEvent == gc)

@@ -24,12 +24,16 @@ public class ConnectionTests
         Assert.True(vm.IsPaused);
         Assert.Equal(1.5, vm.SessionSeconds);
         Assert.Equal(5, vm.ChartMaximumSeconds);
+        vm.SelectPeriod(1, 1.5);
+        vm.ZoomToSelection();
         session.Frame = TestData.Frame(8);
         vm.Tick();
         Assert.Equal(1.5, vm.SessionSeconds);
+        Assert.Equal(new TimelineRange(1, 1.5), vm.ChartRange);
         vm.ResetTimelineSelection();
         Assert.False(vm.IsPaused);
         Assert.False(vm.HasTimelineSelection);
+        Assert.Equal(new TimelineRange(0, 8), vm.ChartRange);
         Assert.Equal(8, vm.SessionSeconds);
         Assert.True(vm.IsConnected);
     }

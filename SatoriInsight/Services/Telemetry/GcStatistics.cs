@@ -5,20 +5,21 @@ namespace SatoriInsight.Services.Telemetry;
 /// <summary>Per-collection pause values from the analyzed GCEnd callback; never suspension boundaries.</summary>
 public static class GcStatistics
 {
-    private static readonly (string Label, double Upper)[] Bounds =
+    public static IReadOnlyList<PauseInterval> PauseIntervals { get; } =
     [
-        ("<1", 1), ("1–2", 2), ("2–5", 5), ("5–10", 10), ("10–20", 20), ("20–50", 50), ("50+", double.PositiveInfinity)
+        new("<1", 0, 1), new("1–2", 1, 2), new("2–5", 2, 5), new("5–10", 5, 10),
+        new("10–20", 10, 20), new("20–50", 20, 50), new("50+", 50, double.PositiveInfinity)
     ];
 
     public static IReadOnlyList<HistogramBin> Histogram(IEnumerable<GcEvent> events)
     {
-        var counts = new int[Bounds.Length];
+        var counts = new int[PauseIntervals.Count];
 
         foreach (var pause in Values(events))
         {
-            for (var i = 0; i < Bounds.Length; i++)
+            for (var i = 0; i < PauseIntervals.Count; i++)
             {
-                if (pause < Bounds[i].Upper)
+                if (PauseIntervals[i].Contains(pause))
                 {
                     counts[i]++;
                     break;
@@ -26,7 +27,7 @@ public static class GcStatistics
             }
         }
 
-        return Bounds.Select((bound, i) => new HistogramBin(bound.Label, i == 0 ? 0 : Bounds[i - 1].Upper, bound.Upper, counts[i])).ToArray();
+        return PauseIntervals.Select((interval, i) => new HistogramBin(interval.Label, interval.Lower, interval.Upper, counts[i])).ToArray();
     }
 
     public static double Percentile(IEnumerable<GcEvent> events, double percentile)

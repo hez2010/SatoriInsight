@@ -11,6 +11,7 @@ public sealed partial class MainViewModel
     private bool _heapBusy;
     private HeapProfile? _selectedSnapshot;
     private HeapProfile? _baselineSnapshot;
+    private HeapProfile? _comparisonSnapshot;
     private TypeStat? _selectedType;
     private HeapObjectInfo? _selectedObject;
     private ObjectReference? _selectedReference;
@@ -105,22 +106,40 @@ public sealed partial class MainViewModel
     public HeapProfile? SelectedSnapshot
     {
         get => _selectedSnapshot;
-        set
-        {
-            if (Set(ref _selectedSnapshot, value))
-            {
-                _objectRegion = null;
-                _objectHistory.Clear();
-                CapturedRegionMap.SetSnapshot(value);
-                HeapStatus = value?.Coverage ?? "";
+        set => SelectCapture(value);
+    }
 
-                SelectedType = null;
-                SelectedObject = null;
-                Notify(nameof(Types), nameof(TypeDifferences));
-                NotifyObjects();
-                IsRegionInspection = !HasObjectCapture;
-                NotifyHeap();
-            }
+    public HeapProfile? ComparisonSnapshot
+    {
+        get => _comparisonSnapshot;
+        set => SelectCapture(value);
+    }
+
+    private void SelectCapture(HeapProfile? capture)
+    {
+        if (Set(ref _comparisonSnapshot, capture, nameof(ComparisonSnapshot)))
+        {
+            Notify(nameof(TypeDifferences), nameof(HasComparison));
+        }
+
+        InspectCapture(capture);
+    }
+
+    private void InspectCapture(HeapProfile? capture)
+    {
+        if (Set(ref _selectedSnapshot, capture, nameof(SelectedSnapshot)))
+        {
+            _objectRegion = null;
+            _objectHistory.Clear();
+            CapturedRegionMap.SetSnapshot(capture);
+            HeapStatus = capture?.Coverage ?? "";
+
+            SelectedType = null;
+            SelectedObject = null;
+            Notify(nameof(Types));
+            NotifyObjects();
+            IsRegionInspection = !HasObjectCapture;
+            NotifyHeap();
         }
     }
 
@@ -232,14 +251,23 @@ public sealed partial class MainViewModel
 
     public IReadOnlyList<RootPathStep> RootPath => _rootPath;
 
-    public bool HasComparison => BaselineSnapshot is { MetadataOnly: false } baseline && SelectedSnapshot is { MetadataOnly: false } current
+    public bool HasComparison => BaselineSnapshot is { MetadataOnly: false } baseline && ComparisonSnapshot is { MetadataOnly: false } current
         && baseline.Id != current.Id;
 
     public string ComparisonHint => Snapshots.Count(snapshot => !snapshot.MetadataOnly) < 2
         ? "Capture or open two heaps with object data to compare."
         : "Select different captures for the baseline and comparison.";
 
-    public IReadOnlyList<TypeGrowth> TypeDifferences => HasComparison ? HeapAnalysis.Compare(BaselineSnapshot!, SelectedSnapshot!) : [];
+    public IReadOnlyList<TypeGrowth> TypeDifferences => HasComparison ? HeapAnalysis.Compare(BaselineSnapshot!, ComparisonSnapshot!) : [];
+
+    public void InspectInstances(TypeGrowth difference)
+    {
+        InspectCapture(difference.Current is null ? BaselineSnapshot : ComparisonSnapshot);
+        CapturedRegionMap.SelectedRegion = null;
+        TypeSearch = "";
+        SelectedType = difference.Current ?? difference.Baseline!;
+        ShowObjectInspection();
+    }
 
     public void FollowReference()
     {

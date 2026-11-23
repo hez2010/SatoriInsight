@@ -7,17 +7,21 @@
             <Button Grid.Column="1" Name="ResetTimelineButton" Content="Reset" Click="Reset_Click" IsEnabled="{Binding HasTimelineSelection}"
                 Classes="secondary" Padding="10,5" AutomationProperties.Name="Reset timeline selection" />
         </Grid>
-        <TextBlock Text="{Binding TimelineSelectionLabel}" Classes="muted" FontSize="11"
-            ToolTip.Tip="Click a time or drag a range. Memory sizes show the end of the selected range." />
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+            <TextBlock Text="{Binding TimelineSelectionLabel}" Classes="muted" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center"
+                ToolTip.Tip="Click a time or drag a range. Memory sizes show the end of the selected range." />
+            <Button Grid.Column="1" Content="Zoom to selection" Click="Zoom_Click" IsEnabled="{Binding CanZoomToSelection}" Classes="secondary" Padding="8,3" />
+            <Button Grid.Column="2" Content="Zoom out" Click="ZoomOut_Click" IsVisible="{Binding IsTimelineZoomed}" Classes="secondary" Padding="8,3" />
+        </Grid>
         <Border Height="110" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="4">
             <TextBlock Text="Memory chart unavailable in this build." Classes="muted" FontSize="11"
                 HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Border>
         <Grid Height="64">
             <local:GcTimeline Name="CollectionTimeline" Events="{Binding TimelineEvents}" SelectedEvent="{Binding SelectedEvent}"
-                EndSeconds="{Binding ChartMaximumSeconds}" />
+                Range="{Binding ChartRange}" />
             <local:TimelineSelectionOverlay Name="CollectionSelection" Start="{Binding TimelineSelectionStart}" End="{Binding TimelineSelectionEnd}"
-                Maximum="{Binding ChartMaximumSeconds}" IsHitTestVisible="False" />
+                Range="{Binding ChartRange}" IsHitTestVisible="False" />
         </Grid>
         <TextBlock Text="Click the timeline · drag a period · Reset to clear selection" Classes="muted" FontSize="10" HorizontalAlignment="Right" />
     </StackPanel>

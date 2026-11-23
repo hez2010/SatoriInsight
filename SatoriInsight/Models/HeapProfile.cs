@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace SatoriInsight.Models;
 
 public sealed record ObjectReference(ulong Address, string Field);
@@ -34,6 +36,9 @@ public sealed record HeapProfile(
     }
 
     public string Coverage => string.Join(" ", Warnings);
+
+    [JsonIgnore]
+    public string ComparisonCoverageLabel => Warnings.Length == 0 ? $"{Objects.Length:N0} captured objects" : $"{Objects.Length:N0} captured objects · {Coverage}";
 }
 
 public sealed record RootPathStep(int Depth, string Link, ulong Address, string Type)

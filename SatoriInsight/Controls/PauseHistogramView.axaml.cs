@@ -2,7 +2,9 @@ using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 #if AVALONIA_PRO
 using Avalonia.Controls.Charts;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
+using SatoriInsight.Models;
 using SatoriInsight.ViewModels;
 #endif
 
@@ -15,15 +17,35 @@ public partial class PauseHistogramView : UserControl
     public PauseHistogramView() => InitializeComponent();
 
 #if AVALONIA_PRO
+    private void PauseInterval_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: PauseInterval interval })
+        {
+            InspectPauseInterval(interval);
+        }
+    }
+
     private void PauseChart_DataPointClicked(object? sender, DataPointClickedEventArgs e)
     {
-        if (DataContext is MainViewModel vm && e.DataItem is Models.HistogramBin bin)
+        if (e.DataItem is PauseInterval interval)
         {
-            vm.FilterToPauseBin(bin);
-
-            var log = TopLevel.GetTopLevel(this)?.FindControl<DataGrid>("EventsGrid");
-            Dispatcher.UIThread.Post(() => log?.BringIntoView());
+            InspectPauseInterval(interval);
         }
+    }
+
+    private void InspectPauseInterval(PauseInterval interval)
+    {
+        ((MainViewModel)DataContext!).FilterToPauseBin(interval);
+        var log = TopLevel.GetTopLevel(this)?.FindControl<DataGrid>("EventsGrid");
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (log?.SelectedItem is { } selected)
+            {
+                log.ScrollIntoView(selected, null);
+            }
+
+            log?.BringIntoView();
+        }, DispatcherPriority.Loaded);
     }
 #endif
 }

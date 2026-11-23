@@ -144,45 +144,55 @@
             </Border>
         </Grid>
         <Expander Name="ComparisonSection" Header="Compare captures" IsVisible="{Binding HasObjectCapture}" HorizontalContentAlignment="Stretch">
-<StackPanel Spacing="12" Margin="0,16,0,0">
-                    <Grid ColumnDefinitions="320,320" ColumnSpacing="16" HorizontalAlignment="Left">
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="Baseline" />
-                            <ComboBox Name="BaselineCapturePicker" Classes="comparison-capture" ItemsSource="{Binding Snapshots}"
-                                SelectedItem="{Binding BaselineSnapshot}" HorizontalAlignment="Stretch" PlaceholderText="Select a baseline"
-                                AutomationProperties.Name="Baseline capture">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate x:DataType="models:HeapProfile">
-                                        <TextBlock Text="{Binding Label}" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Spacing="6">
-                            <TextBlock Text="Compare with" />
-                            <ComboBox Name="ComparisonCapturePicker" Classes="comparison-capture" ItemsSource="{Binding Snapshots}"
-                                SelectedItem="{Binding SelectedSnapshot}" HorizontalAlignment="Stretch" PlaceholderText="Select a capture"
-                                AutomationProperties.Name="Comparison capture">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate x:DataType="models:HeapProfile">
-                                        <TextBlock Text="{Binding Label}" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                        </StackPanel>
-                    </Grid>
-                    <TextBlock Text="Shallow size by type" Classes="muted" />
-                    <TextBlock Text="{Binding ComparisonHint}" IsVisible="{Binding !HasComparison}" Classes="muted" TextWrapping="Wrap" />
-                    <DataGrid Name="TypeDifferencesGrid" IsVisible="{Binding HasComparison}" ItemsSource="{Binding TypeDifferences}"
-                        Height="450" IsReadOnly="True" AutoGenerateColumns="False">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Type" Binding="{Binding Name}" Width="400" />
-                            <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Baseline" Binding="{Binding BaselineLabel}" SortMemberPath="BaselineBytes" Width="160" />
-                            <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Selected" Binding="{Binding CurrentLabel}" SortMemberPath="CurrentBytes" Width="160" />
-                            <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Change" Binding="{Binding DeltaLabel}" SortMemberPath="DeltaBytes" Width="160" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </StackPanel>
+            <StackPanel Spacing="12" Margin="0,16,0,0">
+                <Grid ColumnDefinitions="320,320" ColumnSpacing="16" HorizontalAlignment="Left">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Baseline" />
+                        <ComboBox Name="BaselineCapturePicker" Classes="comparison-capture" ItemsSource="{Binding Snapshots}"
+                            SelectedItem="{Binding BaselineSnapshot}" HorizontalAlignment="Stretch" PlaceholderText="Select a baseline"
+                            AutomationProperties.Name="Baseline capture">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:HeapProfile">
+                                    <TextBlock Text="{Binding Label}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Text="{Binding BaselineSnapshot.ComparisonCoverageLabel}" Classes="muted" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="6">
+                        <TextBlock Text="Compare with" />
+                        <ComboBox Name="ComparisonCapturePicker" Classes="comparison-capture" ItemsSource="{Binding Snapshots}"
+                            SelectedItem="{Binding ComparisonSnapshot}" HorizontalAlignment="Stretch" PlaceholderText="Select a capture"
+                            AutomationProperties.Name="Comparison capture">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:HeapProfile">
+                                    <TextBlock Text="{Binding Label}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Text="{Binding ComparisonSnapshot.ComparisonCoverageLabel}" Classes="muted" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+                <TextBlock Text="Shallow size and instance count changes by type" Classes="muted" />
+                <TextBlock Text="{Binding ComparisonHint}" IsVisible="{Binding !HasComparison}" Classes="muted" TextWrapping="Wrap" />
+                <DataGrid Name="TypeDifferencesGrid" IsVisible="{Binding HasComparison}" ItemsSource="{Binding TypeDifferences}"
+                    Height="450" IsReadOnly="True" AutoGenerateColumns="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Type" Binding="{Binding Name}" Width="*" MinWidth="150" />
+                        <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Baseline" Binding="{Binding BaselineLabel}" SortMemberPath="BaselineBytes" Width="110" />
+                        <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Compare with" Binding="{Binding CurrentLabel}" SortMemberPath="CurrentBytes" Width="110" />
+                        <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Size change" Binding="{Binding DeltaLabel}" SortMemberPath="DeltaBytes" Width="110" />
+                        <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Instance change" Binding="{Binding DeltaCountLabel}" SortMemberPath="DeltaCount" Width="135" />
+                        <DataGridTemplateColumn Header="Instances" Width="135">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate x:DataType="models:TypeGrowth">
+                                    <Button Content="{Binding InspectLabel}" Click="InspectInstances_Click" Classes="secondary" Padding="8,2" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </StackPanel>
         </Expander>
     </StackPanel>
 </UserControl>

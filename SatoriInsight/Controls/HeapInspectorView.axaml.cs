@@ -36,6 +36,20 @@ public partial class HeapInspectorView : UserControl
 
     private void Back_Click(object? sender, RoutedEventArgs e) => Vm.GoBackToObject();
 
+    private void InspectInstances_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: TypeGrowth difference })
+        {
+            Vm.InspectInstances(difference);
+            Dispatcher.UIThread.Post(() =>
+            {
+                TypesGrid.ScrollIntoView(Vm.SelectedType, null);
+                ObjectsGrid.Focus();
+                ObjectsGrid.BringIntoView();
+            }, DispatcherPriority.Loaded);
+        }
+    }
+
     private void Reference_DoubleTapped(object? sender, TappedEventArgs e) => Vm.FollowReference();
 
     private void Reference_KeyDown(object? sender, KeyEventArgs e)

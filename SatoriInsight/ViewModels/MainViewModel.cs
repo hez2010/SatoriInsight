@@ -16,7 +16,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
     private GcEvent[] _filteredEvents = [];
     private readonly BulkObservableCollection<GcEvent> _eventRows = [];
     private GcEvent? _selectedEvent;
-    private HistogramBin? _selectedPauseBin;
+    private PauseInterval? _selectedPauseBin;
     private int _navigationIndex;
     private int _generationFilterIndex;
 
@@ -86,18 +86,6 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
     };
 
     public double WindowStartSeconds => _selectedPeriodStart ?? 0;
-
-    public double ChartMaximumSeconds => Math.Max(1, (_timelineAnchor ?? _frame).AtSeconds);
-
-    public double ChartStepSeconds => ChartMaximumSeconds switch
-    {
-        <= 6 => 1,
-        <= 15 => 5,
-        <= 45 => 10,
-        <= 90 => 20,
-        <= 180 => 60,
-        _ => Math.Max(100, Math.Ceiling(ChartMaximumSeconds / 600) * 100)
-    };
 
     public bool IsPaused
     {
@@ -176,8 +164,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
     {
         _filteredEvents = GenerationFilterIndex == 0 && SelectedPauseBin is null ? _visibleEvents : _visibleEvents.Where(e => (GenerationFilterIndex == 0
             || e.Generation == GenerationFilterIndex - 1) && (SelectedPauseBin is null
-            || !e.IsThreadLocal
-            && e.PauseMilliseconds >= SelectedPauseBin.Lower && e.PauseMilliseconds < SelectedPauseBin.Upper)).ToArray();
+            || !e.IsThreadLocal && SelectedPauseBin.Contains(e.PauseMilliseconds))).ToArray();
 
         if (SelectedEvent is { } selected && !_filteredEvents.Contains(selected))
         {
@@ -192,7 +179,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
         Notify(nameof(EventFilterLabel), nameof(HasEvents));
     }
 
-    public HistogramBin? SelectedPauseBin
+    public PauseInterval? SelectedPauseBin
     {
         get => _selectedPauseBin;
         set
@@ -341,7 +328,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
 
     public bool HasEventGenerations => EventGenerations.Count > 0;
 
-    public void FilterToPauseBin(HistogramBin bin)
+    public void FilterToPauseBin(PauseInterval bin)
     {
         GenerationFilterIndex = 0;
         SelectedPauseBin = bin;
@@ -425,9 +412,10 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
 
         RefreshEventLog();
         NotifyProcessMetrics();
+        NotifyChartRange();
         Notify(nameof(GcModeLabel), nameof(GcLatencyModeLabel));
         Notify(
-            nameof(SessionTime), nameof(SessionSeconds), nameof(WindowStartSeconds), nameof(ChartMaximumSeconds), nameof(ChartStepSeconds), nameof(UsedLabel),
+            nameof(SessionTime), nameof(SessionSeconds), nameof(WindowStartSeconds), nameof(UsedLabel),
             nameof(CommittedLabel), nameof(AllocationLabel), nameof(MaximumAllocationLabel), nameof(P99Label), nameof(P999Label), nameof(MinPauseLabel), nameof(MaxPauseLabel),
             nameof(P50Label), nameof(P90Label), nameof(P95Label), nameof(AveragePauseLabel),
             nameof(PausePercentLabel), nameof(GcCountLabel), nameof(PauseCountLabel), nameof(Events), nameof(History), nameof(Histogram),

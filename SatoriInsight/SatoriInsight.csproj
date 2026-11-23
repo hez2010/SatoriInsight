@@ -27,14 +27,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="12.1.4" />
-    <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.4" />
+    <PackageReference Include="Avalonia" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.6" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
     <PackageReference Include="FluentAvaloniaUI" Version="3.1.0" />
     <PackageReference Include="Microsoft.Diagnostics.NETCore.Client" Version="0.2.750501" />
-    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="4.0.0" />
+    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="4.0.2" />
     <PackageReference Include="Microsoft.Diagnostics.Runtime" Version="4.2.751201" />
     <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
@@ -43,7 +43,7 @@
   </ItemGroup>
   <ItemGroup Condition="'$(UseAvaloniaPro)' == 'true'">
     <PackageReference Include="Avalonia.Controls.Charts" Version="12.3.1" />
-    <PackageReference Include="Avalonia.Controls.Markdown" Version="12.4.0" />
+    <PackageReference Include="Avalonia.Controls.Markdown" Version="12.4.2" />
     <AvaloniaUILicenseKey Include="$(AvaloniaUILicenseKey)" Condition="'$(AvaloniaUILicenseKey)' != ''" />
     <AvaloniaXaml Remove="Controls/Fallback/**/*.axaml" />
     <AvaloniaXaml Remove="Styles/Fallback/**/*.axaml" />

@@ -190,8 +190,55 @@ public class HeapProfilingTests
         };
         var growth = HeapAnalysis.Compare(baseline, current);
         Assert.Equal(32, growth.Single(t => t.Name == "Node").DeltaBytes);
+        Assert.Equal(1, growth.Single(t => t.Name == "Node").DeltaCount);
         Assert.Equal(-50, growth.Single(t => t.Name == "Removed").DeltaBytes);
+        Assert.Equal(-2, growth.Single(t => t.Name == "Removed").DeltaCount);
         Assert.Equal(20, growth.Single(t => t.Name == "New").DeltaBytes);
+        Assert.Equal(1, growth.Single(t => t.Name == "New").DeltaCount);
+    }
+
+    [Fact]
+    public async Task InspectingComparisonInstancesUsesTheMatchingCaptureAndPreservesThePair()
+    {
+        var baseline = Graph();
+        TypeStat[] currentTypes = [new("Entry", 1, 32), new("Other", 2, 64)];
+        var current = Graph() with
+        {
+            Types = currentTypes,
+            Regions = [baseline.Regions[0] with { Types = currentTypes }],
+            Objects = [baseline.Objects[0] with { Type = "Entry" }, baseline.Objects[1] with { Type = "Other" }, baseline.Objects[2] with { Type = "Other" }],
+            Warnings = ["Some references were omitted; root paths may be incomplete."]
+        };
+        await using var vm = new MainViewModel();
+        vm.Snapshots.Add(baseline);
+        vm.Snapshots.Add(current);
+        vm.BaselineSnapshot = baseline;
+        vm.SelectedSnapshot = current;
+        vm.TypeSearch = "Other";
+        vm.CapturedRegionMap.SelectedRegion = current.Regions[0];
+        vm.SelectedType = Assert.Single(vm.Types);
+        var added = vm.TypeDifferences.Single(type => type.Name == "Entry");
+        var removed = vm.TypeDifferences.Single(type => type.Name == "Node");
+
+        vm.InspectInstances(added);
+        Assert.Equal(current.Objects[0], Assert.Single(vm.Objects));
+        Assert.Equal(current.Objects[0], vm.SelectedObject);
+        Assert.Contains(current.Types[0], vm.Types);
+        Assert.Null(vm.CapturedRegionMap.SelectedRegion);
+        Assert.False(vm.IsRegionInspection);
+
+        vm.InspectInstances(removed);
+        Assert.Same(baseline, vm.SelectedSnapshot);
+        Assert.Equal(baseline.Objects, vm.Objects);
+        Assert.Equal(baseline.Types[0], vm.SelectedType);
+        Assert.Same(baseline, vm.BaselineSnapshot);
+        Assert.Same(current, vm.ComparisonSnapshot);
+        Assert.Contains(current.Warnings[0], current.ComparisonCoverageLabel);
+        Assert.Equal(-3, vm.TypeDifferences.Single(type => type.Name == "Node").DeltaCount);
+
+        vm.InspectInstances(added);
+        Assert.Same(current, vm.SelectedSnapshot);
+        Assert.Equal(current.Objects[0], Assert.Single(vm.Objects));
     }
 
     [Fact]

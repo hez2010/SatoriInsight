@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using SatoriInsight.Models;
 
 namespace SatoriInsight.Controls;
 
@@ -8,7 +9,7 @@ public sealed class TimelineSelectionOverlay : Control
 {
     public static readonly StyledProperty<double?> StartProperty = AvaloniaProperty.Register<TimelineSelectionOverlay, double?>(nameof(Start));
     public static readonly StyledProperty<double?> EndProperty = AvaloniaProperty.Register<TimelineSelectionOverlay, double?>(nameof(End));
-    public static readonly StyledProperty<double> MaximumProperty = AvaloniaProperty.Register<TimelineSelectionOverlay, double>(nameof(Maximum), 1);
+    public static readonly StyledProperty<TimelineRange> RangeProperty = AvaloniaProperty.Register<TimelineSelectionOverlay, TimelineRange>(nameof(Range), new(0, 1));
 
     public double? Start
     {
@@ -22,23 +23,25 @@ public sealed class TimelineSelectionOverlay : Control
         set => SetValue(EndProperty, value);
     }
 
-    public double Maximum
+    public TimelineRange Range
     {
-        get => GetValue(MaximumProperty);
-        set => SetValue(MaximumProperty, value);
+        get => GetValue(RangeProperty);
+        set => SetValue(RangeProperty, value);
     }
 
-    static TimelineSelectionOverlay() => AffectsRender<TimelineSelectionOverlay>(StartProperty, EndProperty, MaximumProperty);
+    static TimelineSelectionOverlay() => AffectsRender<TimelineSelectionOverlay>(StartProperty, EndProperty, RangeProperty);
 
     public override void Render(DrawingContext context)
     {
-        if (Start is not { } start || End is not { } end || Maximum <= 0)
+        var range = Range;
+
+        if (Start is not { } start || End is not { } end || end < range.Start || start > range.End)
         {
             return;
         }
 
-        var x1 = Math.Clamp(start / Maximum, 0, 1) * Bounds.Width;
-        var x2 = Math.Clamp(end / Maximum, 0, 1) * Bounds.Width;
+        var x1 = Math.Clamp(range.FractionAt(start), 0, 1) * Bounds.Width;
+        var x2 = Math.Clamp(range.FractionAt(end), 0, 1) * Bounds.Width;
         using var clip = context.PushClip(new Rect(Bounds.Size));
 
         if (x2 > x1)

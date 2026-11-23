@@ -9,6 +9,33 @@ public sealed partial class MainViewModel
     private GcEvent[] _timelineEvents = [];
     private double? _selectedTime;
     private double? _selectedPeriodStart;
+    private TimelineRange? _zoomedRange;
+
+    private TimelineRange? SelectedPeriod => _selectedPeriodStart is { } start ? new(start, _selectedTime!.Value) : null;
+
+    public TimelineRange ChartRange => _zoomedRange ?? new TimelineRange(0, Math.Max(1, (_timelineAnchor ?? _frame).AtSeconds));
+
+    public double ChartMaximumSeconds => ChartRange.End;
+
+    public double ChartStepSeconds
+    {
+        get
+        {
+            var targetStep = ChartRange.Duration / 5;
+            var unit = Math.Pow(10, Math.Floor(Math.Log10(targetStep)));
+            return (targetStep / unit) switch
+            {
+                <= 1 => unit,
+                <= 2 => 2 * unit,
+                <= 5 => 5 * unit,
+                _ => 10 * unit
+            };
+        }
+    }
+
+    public bool IsTimelineZoomed => _zoomedRange.HasValue;
+
+    public bool CanZoomToSelection => SelectedPeriod is { } period && period != ChartRange;
 
     public bool HasTimelineSelection => _selectedTime.HasValue;
 
@@ -27,6 +54,23 @@ public sealed partial class MainViewModel
     public void SelectTimePoint(double seconds) => SelectTimeline(seconds, null, true);
 
     public void SelectPeriod(double start, double end) => SelectTimeline(Math.Max(start, end), Math.Min(start, end), true);
+
+    public void ZoomToSelection()
+    {
+        if (CanZoomToSelection)
+        {
+            _zoomedRange = SelectedPeriod;
+            NotifyChartRange();
+        }
+    }
+
+    public void ZoomOutTimeline()
+    {
+        _zoomedRange = null;
+        NotifyChartRange();
+    }
+
+    private void NotifyChartRange() => Notify(nameof(ChartRange), nameof(ChartMaximumSeconds), nameof(ChartStepSeconds), nameof(IsTimelineZoomed), nameof(CanZoomToSelection));
 
     private void SelectTimeline(double end, double? start, bool stopPlayback)
     {
@@ -48,6 +92,11 @@ public sealed partial class MainViewModel
         if (_selectedPeriodStart == _selectedTime)
         {
             _selectedPeriodStart = null;
+        }
+
+        if (_zoomedRange is { } zoom && (!zoom.Contains(_selectedTime.Value) || _selectedPeriodStart is { } from && !zoom.Contains(from)))
+        {
+            _zoomedRange = null;
         }
 
         _isPaused = true;
@@ -124,6 +173,7 @@ public sealed partial class MainViewModel
         _timelineAnchor = null;
         _timelineEvents = [];
         _selectedTime = _selectedPeriodStart = null;
+        _zoomedRange = null;
     }
 
     private DiagnosticFrame RecordedFrame()

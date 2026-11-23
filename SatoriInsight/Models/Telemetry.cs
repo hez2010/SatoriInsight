@@ -3,7 +3,12 @@ namespace SatoriInsight.Models;
 public sealed record MetricPoint(
     double Seconds, double? UsedMiB, double? CommittedMiB, double? AllocationMiB, RuntimeHeapMetrics? HeapMetrics = null, GcCollectionCounts? GcCounts = null);
 
-public sealed record HistogramBin(string Label, double Lower, double Upper, int Count);
+public record PauseInterval(string Label, double Lower, double Upper)
+{
+    public bool Contains(double milliseconds) => milliseconds >= Lower && milliseconds < Upper;
+}
+
+public sealed record HistogramBin(string Label, double Lower, double Upper, int Count) : PauseInterval(Label, Lower, Upper);
 
 public sealed record DiagnosticFrame(
     double AtSeconds, IReadOnlyList<HeapRegion> Regions, IReadOnlyList<GcEvent> Events, IReadOnlyList<MetricPoint> History, double? AllocationMiB,
