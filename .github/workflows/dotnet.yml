@@ -106,7 +106,7 @@ jobs:
         if: ${{ !matrix.alpine }}
         uses: actions/setup-dotnet@v6.0.0
         with:
-          dotnet-version: 10.0.x
+          global-json-file: global.json
           architecture: ${{ matrix.architecture }}
 
       - name: Install Linux build dependencies
@@ -143,7 +143,7 @@ jobs:
             --env DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
             --volume "$GITHUB_WORKSPACE:/workspace" \
             --workdir /workspace \
-            mcr.microsoft.com/dotnet/sdk:10.0-alpine-aot \
+            mcr.microsoft.com/dotnet/sdk:11.0-alpine-aot \
             sh -ec '
               apk add --no-cache icu-libs
               dotnet publish SatoriInsight/SatoriInsight.csproj -c Release -r "$1" \
