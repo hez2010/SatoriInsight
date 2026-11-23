@@ -60,8 +60,8 @@ public class GenerationRangeTests
     }
 
     [Theory(Timeout = 30000)]
-    [InlineData("net10.0", false)]
-    [InlineData("net10.0", true)]
+    [InlineData("net11.0", false)]
+    [InlineData("net11.0", true)]
     public async Task ServerAndWorkstationTargetsProduceGenerationMapsAndReplay(string framework, bool serverGc)
     {
         using var workload = await TestWorkload.StartAsync(framework, serverGc);

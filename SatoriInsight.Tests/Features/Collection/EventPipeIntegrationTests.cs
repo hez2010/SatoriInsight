@@ -9,7 +9,7 @@ namespace SatoriInsight.Tests;
 public class EventPipeIntegrationTests
 {
     [Theory(Timeout = 45000)]
-    [InlineData("net10.0")]
+    [InlineData("net11.0")]
     public async Task LocalCollectorReceivesRealMetricsCollectionsAndSuspensions(string framework)
     {
         using var target = await TestWorkload.StartAsync(framework);
@@ -51,7 +51,7 @@ public class EventPipeIntegrationTests
     [Fact(Timeout = 45000)]
     public async Task TargetExitCompletesCollectionAndAReplacementSessionStartsEmpty()
     {
-        using var target = await TestWorkload.StartAsync("net10.0");
+        using var target = await TestWorkload.StartAsync("net11.0");
         var token = TestContext.Current.CancellationToken;
         var identity = (await new LocalProcessDiscovery().ListAsync(token)).Single(p => p.ProcessId == target.Process.Id);
 

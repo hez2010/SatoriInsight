@@ -332,7 +332,7 @@ public class ProcessLaunchTests
 
         public LaunchFiles()
         {
-            var source = Path.GetDirectoryName(TestPaths.ManagedWorkload("net10.0"))!;
+            var source = Path.GetDirectoryName(TestPaths.ManagedWorkload("net11.0"))!;
 
             System.IO.Directory.CreateDirectory(Directory);
 

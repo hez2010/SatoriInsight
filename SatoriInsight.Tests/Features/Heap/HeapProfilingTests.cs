@@ -12,7 +12,7 @@ namespace SatoriInsight.Tests;
 public class HeapProfilingTests
 {
     [Theory(Timeout = 90000)]
-    [InlineData("net10.0")]
+    [InlineData("net11.0")]
     public async Task WorkerCapturesRealRegionsObjectsHolesAndRootsAndReplayPreservesThem(string framework)
     {
         using var target = await TestWorkload.StartAsync(framework);
@@ -152,7 +152,7 @@ public class HeapProfilingTests
     [Fact(Timeout = 90000)]
     public async Task DumpCanBeInspectedOfflineAndCaptureLimitsRemainExplicit()
     {
-        using var target = await TestWorkload.StartAsync("net10.0");
+        using var target = await TestWorkload.StartAsync("net11.0");
         var path = Path.Combine(Path.GetTempPath(), $"satori-test-{Guid.NewGuid():N}.dmp");
 
         try
