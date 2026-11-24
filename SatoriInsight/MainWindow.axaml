@@ -237,7 +237,7 @@
                                 </Grid>
                                 <TextBlock IsVisible="{Binding !HasEvents}" Text="{Binding EmptyEventsLabel}" Classes="muted" Margin="12,8" />
                                 <local:SortableTableView Name="EventsGrid" Height="290" Source="{Binding EventLog}"
-                                    SelectedItem="{Binding SelectedEvent}" SelectionMode="Single">
+                                    SelectedItem="{Binding SelectedEvent}" SelectionMode="Single" AutoScrollToSelectedItem="False">
                                     <TableView.Columns>
                                         <local:SortColumn x:DataType="models:GcEvent" Header="GC #" Binding="{Binding NumberLabel}" SortBinding="{Binding Number}" Width="80" />
                                         <local:SortColumn x:DataType="models:GcEvent" Header="Completed" Binding="{Binding TimeLabel}" SortBinding="{Binding EndSeconds}" Width="112" />

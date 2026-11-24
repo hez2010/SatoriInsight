@@ -13,7 +13,7 @@
             <Button Grid.Column="1" Content="Refresh" Click="Refresh_Click" IsEnabled="{Binding CanRefreshProcesses}" Classes="secondary" />
         </Grid>
         <local:SortableTableView Grid.Row="1" Name="ProcessGrid" Source="{Binding LocalProcesses}"
-            SelectedItem="{Binding SelectedLocalProcess}" SelectionMode="Single">
+            SelectedItem="{Binding SelectedLocalProcess}" SelectionMode="Single" AutoScrollToSelectedItem="False">
             <TableView.Columns>
                 <local:SortColumn x:DataType="models:LocalDotNetProcess" Header="Process" Binding="{Binding Name}" Width="*">
                     <TableViewColumn.CellTemplate>
