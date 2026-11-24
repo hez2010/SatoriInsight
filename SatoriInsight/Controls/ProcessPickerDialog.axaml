@@ -1,5 +1,5 @@
 <fa:FAContentDialog xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:fa="using:FluentAvalonia.UI.Controls"
-    xmlns:vm="using:SatoriInsight.ViewModels" xmlns:models="using:SatoriInsight.Models" x:DataType="vm:MainViewModel"
+    xmlns:local="using:SatoriInsight.Controls" xmlns:vm="using:SatoriInsight.ViewModels" xmlns:models="using:SatoriInsight.Models" x:DataType="vm:MainViewModel"
     x:Class="SatoriInsight.Controls.ProcessPickerDialog" Title="Select a local .NET process" PrimaryButtonText="Connect" CloseButtonText="Cancel"
     IsPrimaryButtonEnabled="{Binding CanAttach}">
     <fa:FAContentDialog.Resources>
@@ -12,24 +12,24 @@
                 AutomationProperties.Name="Search local .NET processes" />
             <Button Grid.Column="1" Content="Refresh" Click="Refresh_Click" IsEnabled="{Binding CanRefreshProcesses}" Classes="secondary" />
         </Grid>
-        <DataGrid Grid.Row="1" Name="ProcessGrid" ItemsSource="{Binding LocalProcesses}" SelectedItem="{Binding SelectedLocalProcess}"
-            IsReadOnly="True" AutoGenerateColumns="False" SelectionMode="Single">
-            <DataGrid.Columns>
-                <DataGridTemplateColumn Header="Process" SortMemberPath="Name" Width="*">
-                    <DataGridTemplateColumn.CellTemplate>
+        <local:SortableTableView Grid.Row="1" Name="ProcessGrid" Source="{Binding LocalProcesses}"
+            SelectedItem="{Binding SelectedLocalProcess}" SelectionMode="Single">
+            <TableView.Columns>
+                <local:SortColumn x:DataType="models:LocalDotNetProcess" Header="Process" Binding="{Binding Name}" Width="*">
+                    <TableViewColumn.CellTemplate>
                         <DataTemplate x:DataType="models:LocalDotNetProcess">
-                            <TextBlock Classes="process-name" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="12,0">
+                            <TextBlock Classes="process-name" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center">
                                 <ToolTip.Tip>
                                     <TextBlock Text="{Binding CommandLineTooltip}" MaxWidth="680" TextWrapping="Wrap" />
                                 </ToolTip.Tip>
                             </TextBlock>
                         </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTextColumn x:DataType="models:LocalDotNetProcess" Header="PID" Binding="{Binding ProcessId}" SortMemberPath="ProcessId" Width="100" />
-                <DataGridTextColumn x:DataType="models:LocalDotNetProcess" Header="Started (local)" Binding="{Binding StartedLabel}" SortMemberPath="StartTimeUtc" Width="150" />
-            </DataGrid.Columns>
-        </DataGrid>
+                    </TableViewColumn.CellTemplate>
+                </local:SortColumn>
+                <local:SortColumn x:DataType="models:LocalDotNetProcess" Header="PID" Binding="{Binding ProcessId}" Width="100" />
+                <local:SortColumn x:DataType="models:LocalDotNetProcess" Header="Started (local)" Binding="{Binding StartedLabel}" SortBinding="{Binding StartTimeUtc}" Width="150" />
+            </TableView.Columns>
+        </local:SortableTableView>
         <StackPanel Grid.Row="2" Spacing="8">
             <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsRefreshingProcesses}" Height="3" />
             <TextBlock Text="{Binding ProcessCountLabel}" FontSize="12" />

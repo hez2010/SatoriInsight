@@ -36,12 +36,12 @@ public partial class PauseHistogramView : UserControl
     private void InspectPauseInterval(PauseInterval interval)
     {
         ((MainViewModel)DataContext!).FilterToPauseBin(interval);
-        var log = TopLevel.GetTopLevel(this)?.FindControl<DataGrid>("EventsGrid");
+        var log = TopLevel.GetTopLevel(this)?.FindControl<TableView>("EventsGrid");
         Dispatcher.UIThread.Post(() =>
         {
             if (log?.SelectedItem is { } selected)
             {
-                log.ScrollIntoView(selected, null);
+                log.ScrollIntoView(selected);
             }
 
             log?.BringIntoView();

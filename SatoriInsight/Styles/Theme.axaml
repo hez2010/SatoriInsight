@@ -1,4 +1,4 @@
-<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:fa="using:FluentAvalonia.UI.Controls">
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:SatoriInsight.Controls">
     <Style Selector=":is(Window)">
         <Setter Property="FontFamily" Value="avares://Avalonia.Fonts.Inter/Assets#Inter" />
         <Setter Property="FontSize" Value="13" />
@@ -98,59 +98,44 @@
     <Style Selector="ComboBox /template/ ContentPresenter#ContentPresenter">
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
-    <Style Selector="DataGrid">
-        <Setter Property="CanUserResizeColumns" Value="True" />
-        <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
+    <Style Selector="TableView">
+        <Setter Property="ScrollViewer.AllowAutoHide" Value="False" />
+        <Setter Property="SelectionMode" Value="Multiple" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="FocusAdorner" Value="{x:Null}" />
-        <Setter Property="GridLinesVisibility" Value="Horizontal" />
-        <Setter Property="HorizontalGridLinesBrush" Value="#252E3D" />
-        <Setter Property="RowHeight" Value="30" />
-        <Setter Property="ColumnHeaderHeight" Value="35" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="13" />
     </Style>
-    <Style Selector="DataGrid /template/ ScrollBar#PART_HorizontalScrollbar">
-        <Setter Property="AllowAutoHide" Value="False" />
+    <Style Selector="TableViewRow">
+        <Setter Property="Height" Value="30" />
+        <Setter Property="BorderBrush" Value="#252E3D" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
     </Style>
-    <Style Selector="DataGridColumnHeader">
-        <Setter Property="Background" Value="#151B26" />
-        <Setter Property="Foreground" Value="#8795A9" />
-        <Setter Property="FontSize" Value="11" />
+    <Style Selector="TableViewCell">
         <Setter Property="Padding" Value="12,0" />
-        <Setter Property="VerticalContentAlignment" Value="Stretch" />
-    </Style>
-    <Style Selector="DataGridColumnHeader /template/ ContentPresenter">
-        <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
-    <Style Selector="DataGridColumnHeader:sortascending /template/ fa|FAFontIcon#SortIcon,
-        DataGridColumnHeader:sortdescending /template/ fa|FAFontIcon#SortIcon">
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="Width" Value="12" />
-        <Setter Property="Height" Value="12" />
-        <Setter Property="Margin" Value="4,0,0,0" />
+    <Style Selector="TableViewColumnHeader">
+        <Setter Property="Height" Value="35" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+        <Setter Property="FontSize" Value="11" />
     </Style>
-    <Style Selector="DataGridCell">
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="MinHeight" Value="0" />
-        <Setter Property="FocusAdorner" Value="{x:Null}" />
-    </Style>
-    <Style Selector="DataGridCell:focus /template/ Grid#FocusVisual">
-        <Setter Property="IsVisible" Value="False" />
-    </Style>
-    <Style Selector="DataGridCell:current /template/ Rectangle#CurrencyVisual">
-        <Setter Property="IsVisible" Value="False" />
-        <Setter Property="Height" Value="1" />
-        <Setter Property="VerticalAlignment" Value="Bottom" />
-        <Setter Property="Margin" Value="8,0,8,2" />
-        <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
-        <Setter Property="StrokeThickness" Value="0" />
-    </Style>
-    <Style Selector="DataGrid:focus-visible DataGridCell:current /template/ Rectangle#CurrencyVisual,
-        DataGridCell:current:focus-visible /template/ Rectangle#CurrencyVisual">
-        <Setter Property="IsVisible" Value="True" />
+    <Style Selector="local|SortColumn">
+        <Setter Property="HeaderTheme">
+            <ControlTheme TargetType="TableViewColumnHeader" BasedOn="{StaticResource {x:Type TableViewColumnHeader}}">
+                <Setter Property="Focusable" Value="True" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="ContentTemplate">
+                    <DataTemplate x:DataType="x:String">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <ContentPresenter Content="{Binding}" />
+                            <TextBlock Text="{Binding $parent[TableViewColumnHeader].((local:SortColumn)Column).SortIndicator}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Setter>
+            </ControlTheme>
+        </Setter>
     </Style>
     <Style Selector="ProgressBar">
         <Setter Property="Height" Value="5" />

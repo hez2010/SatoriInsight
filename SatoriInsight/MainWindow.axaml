@@ -236,39 +236,38 @@
                                         Command="{Binding ClearPauseFilterCommand}" Classes="secondary" Padding="9,5" />
                                 </Grid>
                                 <TextBlock IsVisible="{Binding !HasEvents}" Text="{Binding EmptyEventsLabel}" Classes="muted" Margin="12,8" />
-                                <DataGrid Name="EventsGrid" Height="290" ItemsSource="{Binding EventLog}"
-                                    SelectedItem="{Binding SelectedEvent}" AutoGenerateColumns="False" IsReadOnly="True"
-                                    SelectionMode="Single">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="GC #" Binding="{Binding NumberLabel}" SortMemberPath="Number" Width="80" />
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Completed" Binding="{Binding TimeLabel}" SortMemberPath="EndSeconds" Width="112" />
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Gen" Binding="{Binding GenerationLabel}" SortMemberPath="Generation" Width="65" />
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Mode" Binding="{Binding Kind}" Width="140" />
-                                        <DataGridTemplateColumn Header="Latency mode" SortMemberPath="LatencyMode" Width="190">
-                                            <DataGridTemplateColumn.CellTemplate>
+                                <local:SortableTableView Name="EventsGrid" Height="290" Source="{Binding EventLog}"
+                                    SelectedItem="{Binding SelectedEvent}" SelectionMode="Single">
+                                    <TableView.Columns>
+                                        <local:SortColumn x:DataType="models:GcEvent" Header="GC #" Binding="{Binding NumberLabel}" SortBinding="{Binding Number}" Width="80" />
+                                        <local:SortColumn x:DataType="models:GcEvent" Header="Completed" Binding="{Binding TimeLabel}" SortBinding="{Binding EndSeconds}" Width="112" />
+                                        <local:SortColumn x:DataType="models:GcEvent" Header="Gen" Binding="{Binding GenerationLabel}" SortBinding="{Binding Generation}" Width="65" />
+                                        <local:SortColumn x:DataType="models:GcEvent" Header="Mode" Binding="{Binding Kind}" Width="140" />
+                                        <local:SortColumn x:DataType="models:GcEvent" Header="Latency mode" Binding="{Binding LatencyModeLabel}" SortBinding="{Binding LatencyMode}" Width="190">
+                                            <TableViewColumn.CellTemplate>
                                                 <DataTemplate x:DataType="models:GcEvent">
-                                                    <TextBlock Text="{Binding LatencyModeLabel}" ToolTip.Tip="{Binding LatencyModeTooltip}" Margin="12,0"
+                                                    <TextBlock Text="{Binding LatencyModeLabel}" ToolTip.Tip="{Binding LatencyModeTooltip}"
                                                         VerticalAlignment="Center" />
                                                 </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Reason / outcome" Binding="{Binding Reason}" Width="160" />
-                                        <DataGridTemplateColumn Header="Before" SortMemberPath="BeforeBytes" Width="112">
-                                            <DataGridTemplateColumn.CellTemplate>
+                                            </TableViewColumn.CellTemplate>
+                                        </local:SortColumn>
+                                        <local:SortColumn x:DataType="models:GcEvent" Header="Reason / outcome" Binding="{Binding Reason}" Width="160" />
+                                        <local:SortColumn x:DataType="models:GcEvent" Header="Before" Binding="{Binding BeforeLabel}" SortBinding="{Binding BeforeBytes}" Width="112">
+                                            <TableViewColumn.CellTemplate>
                                                 <DataTemplate x:DataType="models:GcEvent">
-                                                    <TextBlock Text="{Binding BeforeLabel}" ToolTip.Tip="{Binding BeforeTooltip}" Margin="12,0"
+                                                    <TextBlock Text="{Binding BeforeLabel}" ToolTip.Tip="{Binding BeforeTooltip}"
                                                         VerticalAlignment="Center" />
                                                 </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="After" Binding="{Binding AfterLabel}" SortMemberPath="AfterBytes" Width="112" />
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="GC pause" Binding="{Binding PauseLabel}" SortMemberPath="ProcessPauseMilliseconds" Width="110" />
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="GC duration" Binding="{Binding DurationLabel}" SortMemberPath="DurationMilliseconds" Width="120" />
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Promoted" Binding="{Binding PromotedLabel}" SortMemberPath="PromotedBytes" Width="112" />
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Memory scope" Binding="{Binding MemoryScope}" Width="140" />
-                                        <DataGridTextColumn x:DataType="models:GcEvent" Header="Suspend latency" Binding="{Binding SuspendLabel}" SortMemberPath="ProcessSuspendMilliseconds" Width="140" />
-                                    </DataGrid.Columns>
-                                </DataGrid>
+                                            </TableViewColumn.CellTemplate>
+                                        </local:SortColumn>
+                                        <local:SortColumn x:DataType="models:GcEvent" Header="After" Binding="{Binding AfterLabel}" SortBinding="{Binding AfterBytes}" Width="112" />
+                                        <local:SortColumn x:DataType="models:GcEvent" Header="GC pause" Binding="{Binding PauseLabel}" SortBinding="{Binding ProcessPauseMilliseconds}" Width="110" />
+                                        <local:SortColumn x:DataType="models:GcEvent" Header="GC duration" Binding="{Binding DurationLabel}" SortBinding="{Binding DurationMilliseconds}" Width="120" />
+                                        <local:SortColumn x:DataType="models:GcEvent" Header="Promoted" Binding="{Binding PromotedLabel}" SortBinding="{Binding PromotedBytes}" Width="112" />
+                                        <local:SortColumn x:DataType="models:GcEvent" Header="Memory scope" Binding="{Binding MemoryScope}" Width="140" />
+                                        <local:SortColumn x:DataType="models:GcEvent" Header="Suspend latency" Binding="{Binding SuspendLabel}" SortBinding="{Binding ProcessSuspendMilliseconds}" Width="140" />
+                                    </TableView.Columns>
+                                </local:SortableTableView>
                             </StackPanel>
                         </Border>
                         <Border Classes="panel">
@@ -379,15 +378,14 @@
                                         </DataTemplate>
                                     </ContentControl.ContentTemplate>
                                 </ContentControl>
-                                <DataGrid IsVisible="{Binding HasEventGenerations}" ItemsSource="{Binding EventGenerations}"
-                                    AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="220">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="Generation" Binding="{Binding Generation}" Width="*" />
-                                        <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="Before" Binding="{Binding BeforeLabel}" SortMemberPath="BeforeBytes" Width="*" />
-                                        <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="After" Binding="{Binding AfterLabel}" SortMemberPath="AfterBytes" Width="*" />
-                                        <DataGridTextColumn x:DataType="models:GcGenerationStats" Header="Promoted" Binding="{Binding PromotedLabel}" SortMemberPath="PromotedBytes" Width="*" />
-                                    </DataGrid.Columns>
-                                </DataGrid>
+                                <local:SortableTableView IsVisible="{Binding HasEventGenerations}" Source="{Binding EventGenerations}" MaxHeight="220">
+                                    <TableView.Columns>
+                                        <local:SortColumn x:DataType="models:GcGenerationStats" Header="Generation" Binding="{Binding Generation}" Width="*" />
+                                        <local:SortColumn x:DataType="models:GcGenerationStats" Header="Before" Binding="{Binding BeforeLabel}" SortBinding="{Binding BeforeBytes}" Width="*" />
+                                        <local:SortColumn x:DataType="models:GcGenerationStats" Header="After" Binding="{Binding AfterLabel}" SortBinding="{Binding AfterBytes}" Width="*" />
+                                        <local:SortColumn x:DataType="models:GcGenerationStats" Header="Promoted" Binding="{Binding PromotedLabel}" SortBinding="{Binding PromotedBytes}" Width="*" />
+                                    </TableView.Columns>
+                                </local:SortableTableView>
                             </StackPanel>
                         </Border>
                     </StackPanel>

@@ -49,14 +49,14 @@
                         <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
                             <TextBlock Text="Types" FontWeight="SemiBold" />
                             <TextBox Grid.Row="1" Text="{Binding TypeSearch}" PlaceholderText="Filter types" AutomationProperties.Name="Filter captured types" />
-                            <DataGrid Grid.Row="2" Name="TypesGrid" ItemsSource="{Binding Types}" SelectedItem="{Binding SelectedType}"
-                                IsReadOnly="True" AutoGenerateColumns="False" PointerReleased="Object_Focused" GotFocus="Object_Focused">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn x:DataType="models:TypeStat" Header="Type" Binding="{Binding Name}" Width="300" />
-                                    <DataGridTextColumn x:DataType="models:TypeStat" Header="Count" Binding="{Binding CountLabel}" SortMemberPath="Count" Width="75" />
-                                    <DataGridTextColumn x:DataType="models:TypeStat" Header="Bytes" Binding="{Binding SizeLabel}" SortMemberPath="Bytes" Width="100" />
-                                </DataGrid.Columns>
-                            </DataGrid>
+                            <local:SortableTableView Grid.Row="2" Name="TypesGrid" Source="{Binding Types}" SelectedItem="{Binding SelectedType}"
+                                PointerReleased="Object_Focused" GotFocus="Object_Focused">
+                                <TableView.Columns>
+                                    <local:SortColumn x:DataType="models:TypeStat" Header="Type" Binding="{Binding Name}" Width="300" />
+                                    <local:SortColumn x:DataType="models:TypeStat" Header="Count" Binding="{Binding CountLabel}" SortBinding="{Binding Count}" Width="75" />
+                                    <local:SortColumn x:DataType="models:TypeStat" Header="Bytes" Binding="{Binding SizeLabel}" SortBinding="{Binding Bytes}" Width="100" />
+                                </TableView.Columns>
+                            </local:SortableTableView>
                         </Grid>
                     </Border>
                     <GridSplitter Grid.Row="1" Name="ObjectListSplitter" ResizeDirection="Rows" ResizeBehavior="PreviousAndNext"
@@ -64,16 +64,15 @@
                     <Border Grid.Row="2" Classes="panel" Padding="12" ClipToBounds="True">
                         <Grid RowDefinitions="Auto,*" RowSpacing="8">
                             <TextBlock Text="{Binding ObjectCountLabel}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ObjectCountLabel}" FontWeight="SemiBold" />
-                            <DataGrid Grid.Row="1" Name="ObjectsGrid" ItemsSource="{Binding Objects}" SelectedItem="{Binding SelectedObject}"
-                                IsReadOnly="True" AutoGenerateColumns="False" SelectionChanged="RevealSelectedObject" Loaded="RevealSelectedObject"
+                            <local:SortableTableView Grid.Row="1" Name="ObjectsGrid" Source="{Binding Objects}" SelectedItem="{Binding SelectedObject}"
                                 PointerReleased="Object_Focused" GotFocus="Object_Focused">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Address" Binding="{Binding AddressLabel}" SortMemberPath="Address" Width="145" />
-                                    <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Type" Binding="{Binding Type}" Width="300" />
-                                    <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Size" Binding="{Binding SizeLabel}" SortMemberPath="Size" Width="90" />
-                                    <DataGridTextColumn x:DataType="models:HeapObjectInfo" Header="Gen" Binding="{Binding GenerationLabel}" SortMemberPath="Generation" Width="70" />
-                                </DataGrid.Columns>
-                            </DataGrid>
+                                <TableView.Columns>
+                                    <local:SortColumn x:DataType="models:HeapObjectInfo" Header="Address" Binding="{Binding AddressLabel}" SortBinding="{Binding Address}" Width="145" />
+                                    <local:SortColumn x:DataType="models:HeapObjectInfo" Header="Type" Binding="{Binding Type}" Width="300" />
+                                    <local:SortColumn x:DataType="models:HeapObjectInfo" Header="Size" Binding="{Binding SizeLabel}" SortBinding="{Binding Size}" Width="90" />
+                                    <local:SortColumn x:DataType="models:HeapObjectInfo" Header="Gen" Binding="{Binding GenerationLabel}" SortBinding="{Binding Generation}" Width="70" />
+                                </TableView.Columns>
+                            </local:SortableTableView>
                         </Grid>
                     </Border>
                 </Grid>
@@ -91,28 +90,27 @@
                             <Button Grid.Column="1" Content="← Back" Click="Back_Click" IsEnabled="{Binding CanGoBackToObject}" Classes="secondary" VerticalAlignment="Top" />
                         </Grid>
                         <TextBlock Grid.Row="1" Text="References" FontWeight="SemiBold" />
-                        <DataGrid Grid.Row="2" Name="ReferencesGrid" ItemsSource="{Binding ObjectReferences}" SelectedItem="{Binding SelectedReference}"
-                            IsReadOnly="True" AutoGenerateColumns="False" DoubleTapped="Reference_DoubleTapped" KeyDown="Reference_KeyDown"
+                        <local:SortableTableView Grid.Row="2" Name="ReferencesGrid" Source="{Binding ObjectReferences}" SelectedItem="{Binding SelectedReference}"
                             ToolTip.Tip="Double-click or press Enter to inspect a referenced object.">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn x:DataType="models:ObjectReference" Header="Field / reference" Binding="{Binding Field}" Width="240" />
-                                <DataGridTextColumn x:DataType="models:ObjectReference" Header="Address" Binding="{Binding Address, StringFormat=0x{0:X}}" SortMemberPath="Address" Width="155" />
-                            </DataGrid.Columns>
-                        </DataGrid>
+                            <TableView.Columns>
+                                <local:SortColumn x:DataType="models:ObjectReference" Header="Field / reference" Binding="{Binding Field}" Width="240" />
+                                <local:SortColumn x:DataType="models:ObjectReference" Header="Address" Binding="{Binding Address, StringFormat=0x{0:X}}" SortBinding="{Binding Address}" Width="155" />
+                            </TableView.Columns>
+                        </local:SortableTableView>
                         <StackPanel Grid.Row="3" Spacing="5">
                             <TextBlock Text="Root path" FontWeight="SemiBold" />
                             <TextBlock Text="{Binding RootPathStatus}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
                             <ProgressBar IsVisible="{Binding IsFindingRoot}" IsIndeterminate="True" Height="3" />
                         </StackPanel>
-                        <DataGrid Grid.Row="4" Name="RootPathGrid" ItemsSource="{Binding RootPath}" IsReadOnly="True" AutoGenerateColumns="False"
-                            DoubleTapped="RootPath_DoubleTapped" KeyDown="RootPath_KeyDown" ToolTip.Tip="Double-click or press Enter to inspect an object on this path.">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn x:DataType="models:RootPathStep" Header="#" Binding="{Binding Depth}" SortMemberPath="Depth" Width="45" />
-                                <DataGridTextColumn x:DataType="models:RootPathStep" Header="Root / reference" Binding="{Binding Link}" Width="220" />
-                                <DataGridTextColumn x:DataType="models:RootPathStep" Header="Address" Binding="{Binding AddressLabel}" SortMemberPath="Address" Width="155" />
-                                <DataGridTextColumn x:DataType="models:RootPathStep" Header="Type" Binding="{Binding Type}" Width="300" />
-                            </DataGrid.Columns>
-                        </DataGrid>
+                        <local:SortableTableView Grid.Row="4" Name="RootPathGrid" Source="{Binding RootPath}"
+                            ToolTip.Tip="Double-click or press Enter to inspect an object on this path.">
+                            <TableView.Columns>
+                                <local:SortColumn x:DataType="models:RootPathStep" Header="#" Binding="{Binding Depth}" Width="45" />
+                                <local:SortColumn x:DataType="models:RootPathStep" Header="Root / reference" Binding="{Binding Link}" Width="220" />
+                                <local:SortColumn x:DataType="models:RootPathStep" Header="Address" Binding="{Binding AddressLabel}" SortBinding="{Binding Address}" Width="155" />
+                                <local:SortColumn x:DataType="models:RootPathStep" Header="Type" Binding="{Binding Type}" Width="300" />
+                            </TableView.Columns>
+                        </local:SortableTableView>
                     </Grid>
                     <Grid Name="RegionDetailsPanel" IsVisible="{Binding IsRegionInspection}">
                         <Grid DataContext="{Binding CapturedRegionMap}" x:DataType="vm:RegionMapViewModel"
@@ -131,13 +129,12 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                            <DataGrid Grid.Row="4" Name="RegionHolesGrid" IsVisible="{Binding HasObjectCapture}" ItemsSource="{Binding RegionHoles}"
-                                IsReadOnly="True" AutoGenerateColumns="False">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn x:DataType="models:FreeHole" Header="Free hole address" Binding="{Binding AddressLabel}" SortMemberPath="Address" Width="200" />
-                                    <DataGridTextColumn x:DataType="models:FreeHole" Header="Size" Binding="{Binding SizeLabel}" SortMemberPath="Size" Width="120" />
-                                </DataGrid.Columns>
-                            </DataGrid>
+                            <local:SortableTableView Grid.Row="4" Name="RegionHolesGrid" IsVisible="{Binding HasObjectCapture}" Source="{Binding RegionHoles}">
+                                <TableView.Columns>
+                                    <local:SortColumn x:DataType="models:FreeHole" Header="Free hole address" Binding="{Binding AddressLabel}" SortBinding="{Binding Address}" Width="200" />
+                                    <local:SortColumn x:DataType="models:FreeHole" Header="Size" Binding="{Binding SizeLabel}" SortBinding="{Binding Size}" Width="120" />
+                                </TableView.Columns>
+                            </local:SortableTableView>
                         </Grid>
                     </Grid>
                 </Grid>
@@ -175,23 +172,23 @@
                 </Grid>
                 <TextBlock Text="Shallow size and instance count changes by type" Classes="muted" />
                 <TextBlock Text="{Binding ComparisonHint}" IsVisible="{Binding !HasComparison}" Classes="muted" TextWrapping="Wrap" />
-                <DataGrid Name="TypeDifferencesGrid" IsVisible="{Binding HasComparison}" ItemsSource="{Binding TypeDifferences}"
-                    Height="450" IsReadOnly="True" AutoGenerateColumns="False">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Type" Binding="{Binding Name}" Width="*" MinWidth="150" />
-                        <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Baseline" Binding="{Binding BaselineLabel}" SortMemberPath="BaselineBytes" Width="110" />
-                        <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Compare with" Binding="{Binding CurrentLabel}" SortMemberPath="CurrentBytes" Width="110" />
-                        <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Size change" Binding="{Binding DeltaLabel}" SortMemberPath="DeltaBytes" Width="110" />
-                        <DataGridTextColumn x:DataType="models:TypeGrowth" Header="Instance change" Binding="{Binding DeltaCountLabel}" SortMemberPath="DeltaCount" Width="135" />
-                        <DataGridTemplateColumn Header="Instances" Width="135">
-                            <DataGridTemplateColumn.CellTemplate>
+                <local:SortableTableView Name="TypeDifferencesGrid" IsVisible="{Binding HasComparison}" Source="{Binding TypeDifferences}"
+                    Height="450">
+                    <TableView.Columns>
+                        <local:SortColumn x:DataType="models:TypeGrowth" Header="Type" Binding="{Binding Name}" Width="*" MinWidth="150" />
+                        <local:SortColumn x:DataType="models:TypeGrowth" Header="Baseline" Binding="{Binding BaselineLabel}" SortBinding="{Binding BaselineBytes}" Width="110" />
+                        <local:SortColumn x:DataType="models:TypeGrowth" Header="Compare with" Binding="{Binding CurrentLabel}" SortBinding="{Binding CurrentBytes}" Width="110" />
+                        <local:SortColumn x:DataType="models:TypeGrowth" Header="Size change" Binding="{Binding DeltaLabel}" SortBinding="{Binding DeltaBytes}" Width="110" />
+                        <local:SortColumn x:DataType="models:TypeGrowth" Header="Instance change" Binding="{Binding DeltaCountLabel}" SortBinding="{Binding DeltaCount}" Width="135" />
+                        <TableViewColumn Header="Instances" Width="135">
+                            <TableViewColumn.CellTemplate>
                                 <DataTemplate x:DataType="models:TypeGrowth">
                                     <Button Content="{Binding InspectLabel}" Click="InspectInstances_Click" Classes="secondary" Padding="8,2" />
                                 </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
+                            </TableViewColumn.CellTemplate>
+                        </TableViewColumn>
+                    </TableView.Columns>
+                </local:SortableTableView>
             </StackPanel>
         </Expander>
     </StackPanel>

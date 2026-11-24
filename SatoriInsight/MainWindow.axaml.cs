@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -31,9 +30,6 @@ public partial class MainWindow : FAAppWindow
     {
     }
 
-    // DataGrid sorting resolves property names at runtime, even with compiled cell bindings.
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(GcEvent))]
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(GcGenerationStats))]
     public MainWindow(MainViewModel viewModel)
     {
         ViewModel = viewModel;
@@ -161,7 +157,7 @@ public partial class MainWindow : FAAppWindow
         }
         finally
         {
-            // A detached grid still observes the shared process list and can clear
+            // A detached picker still observes the shared process list and can clear
             // the next picker's selection when that list refreshes.
             dialog.DataContext = null;
         }

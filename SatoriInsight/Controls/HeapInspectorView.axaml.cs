@@ -1,9 +1,10 @@
-using System.Diagnostics.CodeAnalysis;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using SatoriInsight.Models;
 using SatoriInsight.ViewModels;
 
@@ -13,14 +14,12 @@ public partial class HeapInspectorView : UserControl
 {
     private MainViewModel Vm => (MainViewModel)DataContext!;
 
-    // Keep the properties inspected by DataGrid sorting.
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(TypeStat))]
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(HeapObjectInfo))]
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ObjectReference))]
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(RootPathStep))]
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(TypeGrowth))]
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(FreeHole))]
-    public HeapInspectorView() => InitializeComponent();
+    public HeapInspectorView()
+    {
+        InitializeComponent();
+        RegisterRowActivation(ReferencesGrid, () => Vm.FollowReference());
+        RegisterRowActivation(RootPathGrid, InspectPathObject);
+    }
 
     private async void Capture_Click(object? s, RoutedEventArgs e) => await Vm.CaptureHeapAsync();
 
@@ -43,54 +42,39 @@ public partial class HeapInspectorView : UserControl
             Vm.InspectInstances(difference);
             Dispatcher.UIThread.Post(() =>
             {
-                TypesGrid.ScrollIntoView(Vm.SelectedType, null);
+                TypesGrid.ScrollIntoView(TypesGrid.SelectedIndex);
                 ObjectsGrid.Focus();
                 ObjectsGrid.BringIntoView();
             }, DispatcherPriority.Loaded);
         }
     }
 
-    private void Reference_DoubleTapped(object? sender, TappedEventArgs e) => Vm.FollowReference();
-
-    private void Reference_KeyDown(object? sender, KeyEventArgs e)
+    private static void RegisterRowActivation(TableView table, Action activate)
     {
-        if (e.Key == Key.Enter)
+        table.DoubleTapped += (_, e) =>
         {
-            Vm.FollowReference();
-            e.Handled = true;
-        }
+            if (e.Source is Visual source && source.FindAncestorOfType<TableViewRow>(includeSelf: true) is not null)
+            {
+                activate();
+                e.Handled = true;
+            }
+        };
+
+        table.AddHandler(KeyDownEvent, (_, e) =>
+        {
+            if (e.Key == Key.Enter && (e.Source is TableViewRow || e.Source == table))
+            {
+                activate();
+                e.Handled = true;
+            }
+        }, RoutingStrategies.Tunnel);
     }
 
-    private void RootPath_DoubleTapped(object? sender, TappedEventArgs e) => InspectPathObject(sender);
-
-    private void RootPath_KeyDown(object? sender, KeyEventArgs e)
+    private void InspectPathObject()
     {
-        if (e.Key == Key.Enter)
-        {
-            InspectPathObject(sender);
-            e.Handled = true;
-        }
-    }
-
-    private void InspectPathObject(object? sender)
-    {
-        if (sender is DataGrid { SelectedItem: RootPathStep step } && Vm.SelectedSnapshot?.Objects.FirstOrDefault(obj => obj.Address == step.Address) is { } obj)
+        if (RootPathGrid.SelectedItem is RootPathStep step && Vm.SelectedSnapshot?.Objects.FirstOrDefault(obj => obj.Address == step.Address) is { } obj)
         {
             Vm.InspectObject(obj);
-        }
-    }
-
-    private void RevealSelectedObject(object? sender, RoutedEventArgs e)
-    {
-        if (sender is DataGrid grid && grid.SelectedItem is not null)
-        {
-            Dispatcher.UIThread.Post(() =>
-            {
-                if (grid.IsEffectivelyVisible && grid.SelectedItem is { } item)
-                {
-                    grid.ScrollIntoView(item, null);
-                }
-            }, DispatcherPriority.Loaded);
         }
     }
 

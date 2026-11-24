@@ -36,8 +36,6 @@ public sealed class BulkObservableCollection<T> : ObservableCollection<T>
             }
 
             OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
-            // DataGridCollectionView expands range changes into per-row events.
-            // A single Reset keeps the grid refresh batched as well.
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
         finally

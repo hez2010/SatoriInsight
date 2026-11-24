@@ -2,11 +2,10 @@
     xmlns:local="using:SatoriInsight.Controls" x:Class="SatoriInsight.App" RequestedThemeVariant="Dark">
     <Application.Resources>
         <local:GenerationBrushConverter x:Key="GenerationBrushConverter" />
-        <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
-        <SolidColorBrush x:Key="DataGridRowSelectedBackgroundBrush">#2C3A2D</SolidColorBrush>
-        <SolidColorBrush x:Key="DataGridRowSelectedUnfocusedBackgroundBrush">#27362D</SolidColorBrush>
-        <SolidColorBrush x:Key="DataGridRowSelectedHoveredBackgroundBrush">#344633</SolidColorBrush>
-        <SolidColorBrush x:Key="DataGridRowSelectedHoveredUnfocusedBackgroundBrush">#30402F</SolidColorBrush>
+        <Thickness x:Key="TableViewRowPadding">0</Thickness>
+        <Thickness x:Key="TableViewColumnResizerMargin">0</Thickness>
+        <SolidColorBrush x:Key="TableViewRowBackgroundSelected">#2C3A2D</SolidColorBrush>
+        <SolidColorBrush x:Key="TableViewRowBackgroundSelectedPointerOver">#344633</SolidColorBrush>
         <SolidColorBrush x:Key="SurfaceBrush">#151B26</SolidColorBrush>
         <SolidColorBrush x:Key="PanelBrush">#101620</SolidColorBrush>
         <SolidColorBrush x:Key="LineBrush">#283140</SolidColorBrush>
@@ -17,6 +16,7 @@
         <SolidColorBrush x:Key="Gen2Brush" Color="{x:Static local:GenerationPalette.Gen2Color}" />
     </Application.Resources>
     <Application.Styles>
+        <FluentTheme />
         <fa:FluentAvaloniaTheme PreferSystemTheme="False" CustomAccentColor="#B7EE81" />
         <StyleInclude Source="avares://SatoriInsight/Styles/AvaloniaProStyles.axaml" />
         <StyleInclude Source="avares://SatoriInsight/Styles/Theme.axaml" />
