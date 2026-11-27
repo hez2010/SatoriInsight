@@ -53,9 +53,9 @@ internal sealed class SatoriHeapProbe(ulong heap, Architecture architecture, Sat
 
     internal sealed class Recycler(byte[] header, byte[] repeated, Architecture architecture, ReadMemory read)
     {
-        internal bool HasOrdinaryRegionQueues() => HasRegionQueues(sharded: false);
+        internal bool HasOrdinaryRegionQueues() => HasRegionQueues(sharded: false, relocatedToHigherGenOffset: 184);
 
-        internal bool HasShardedRegionQueues() => HasRegionQueues(sharded: true);
+        internal bool HasShardedRegionQueues(int relocatedToHigherGenOffset = 184) => HasRegionQueues(sharded: true, relocatedToHigherGenOffset);
 
         internal bool HasPerformanceCounterClock(int ticksPerMillisecondOffset) => HasClocks(ticksPerMillisecondOffset, 2);
 
@@ -86,17 +86,17 @@ internal sealed class SatoriHeapProbe(ulong heap, Architecture architecture, Sat
                 && Same(offset, count * 8 + 8);
         }
 
-        private bool HasRegionQueues(bool sharded)
+        private bool HasRegionQueues(bool sharded, int relocatedToHigherGenOffset)
         {
             // These roots are initialized once. Reusable queues, which can swap
             // during a collection, deliberately are not used as anchors.
-            return Same(32, 40) && Same(184, 8)
+            return Same(32, 40) && Same(relocatedToHigherGenOffset, 8)
                 && QueueIs(U64(header, 32), 2, sharded)
                 && QueueIs(U64(header, 40), 3, sharded)
                 && QueueIs(U64(header, 48), 16, sharded)
                 && QueueIs(U64(header, 56), 4, sharded)
                 && QueueIs(U64(header, 64), 5, sharded)
-                && QueueIs(U64(header, 184), 12, false);
+                && QueueIs(U64(header, relocatedToHigherGenOffset), 12, false);
         }
 
         private bool QueueIs(ulong address, int kind, bool sharded)

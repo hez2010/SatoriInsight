@@ -3,7 +3,7 @@ using System.Runtime;
 namespace SatoriInsight.Services.Heap;
 
 // PR #150 (.NET 10: #151): per-page free granules and wide allocation counters.
-internal sealed class LayoutVariant12 : LayoutVariant11
+internal class LayoutVariant12 : LayoutVariant11
 {
     public override int PullRequest => 150;
 

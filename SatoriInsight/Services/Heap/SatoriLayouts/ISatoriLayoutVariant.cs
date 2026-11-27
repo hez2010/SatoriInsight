@@ -23,6 +23,7 @@ internal static class SatoriLayouts
     // Satori layout from the CLR version or persist a match across samples.
     internal static readonly ISatoriLayoutVariant[] All =
     [
+        new LayoutVariant13(),
         new LayoutVariant12(), new LayoutVariant11(), new LayoutVariant10(),
         new LayoutVariant09(), new LayoutVariant08(), new LayoutVariant07(),
         new LayoutVariant06(), new LayoutVariant05(), new LayoutVariant04(),

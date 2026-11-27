@@ -17,7 +17,8 @@ public sealed class SatoriRegionReader
     public const ulong PageSize = 1UL << 30;
     public const ulong RegionSize = 1UL << 21;
     public const ulong FirstObjectOffset = 36888;
-    private const int HeaderSize = 256;
+    private const int CommonHeaderSize = 256;
+    private const int HeaderSize = LayoutVariant13.PinnedByMarkOffset + 1;
     private const int HeaderReadAttempts = 3;
     private const int MaxRegions = 65536;
     private const long ByteBudget = 16 * 1024 * 1024;
@@ -43,7 +44,7 @@ public sealed class SatoriRegionReader
         var complete = true;
         var foundPage = false;
         GCLatencyMode? latencyMode = null;
-        bool Read(ulong address, Span<byte> destination)
+        int ReadBytes(ulong address, Span<byte> destination)
         {
             token.ThrowIfCancellationRequested();
 
@@ -54,8 +55,10 @@ public sealed class SatoriRegionReader
 
             // Charge attempted reads as well, so unreadable addresses cannot bypass the budget.
             readBytes += destination.Length;
-            return memory.Read(address, destination) == destination.Length;
+            return memory.Read(address, destination);
         }
+
+        bool Read(ulong address, Span<byte> destination) => ReadBytes(address, destination) == destination.Length;
 
         RegionReadResult Result(bool recognized, HeapRegion[] output, string? error = null) => new(
             recognized, output, skipped, complete && error is null, readBytes, watch.Elapsed.TotalMilliseconds, error, latencyMode);
@@ -91,14 +94,21 @@ public sealed class SatoriRegionReader
 
             for (var attempt = 0; attempt < HeaderReadAttempts; attempt++)
             {
-                if (!Read(address, header) || !Read(address, repeated))
+                var length = ReadBytes(address, header);
+                if (length < CommonHeaderSize)
+                {
+                    continue;
+                }
+
+                length = Math.Min(length, ReadBytes(address, repeated));
+                if (length < CommonHeaderSize)
                 {
                     continue;
                 }
 
                 var candidates = 0;
 
-                var probe = new SatoriRegionProbe(page.Address, page.End, address, header, repeated, Queue);
+                var probe = new SatoriRegionProbe(page.Address, page.End, address, header, repeated, length, Queue);
 
                 for (var index = 0; index < SatoriLayouts.All.Length; index++)
                 {

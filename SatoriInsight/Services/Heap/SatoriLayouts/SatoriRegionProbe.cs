@@ -6,13 +6,19 @@ namespace SatoriInsight.Services.Heap;
 // Shared bounds and stability checks. Offsets are supplied by the variant's
 // Read implementation; this helper does not choose a layout.
 internal sealed class SatoriRegionProbe(
-    ulong page, ulong pageEnd, ulong address, byte[] header, byte[] repeated, Func<ulong, RegionQueueKind?> queueKind)
+    ulong page, ulong pageEnd, ulong address, byte[] header, byte[] repeated, int length, Func<ulong, RegionQueueKind?> queueKind)
 {
     internal bool IsSizeWithinRegion(int offset)
     {
         var end = U64(24);
         return end >= address && end - address >= SatoriRegionReader.FirstObjectOffset
             && U64(offset) <= end - address - SatoriRegionReader.FirstObjectOffset && Same(offset, 8);
+    }
+
+    internal bool TryReadFlag(int offset, out bool value)
+    {
+        value = header[offset] == 1;
+        return offset < length && header[offset] <= 1 && Same(offset, 1);
     }
 
     internal RegionHeaderInfo? Read(
@@ -39,7 +45,7 @@ internal sealed class SatoriRegionProbe(
 
         if (used < address + SatoriRegionReader.FirstObjectOffset - 8 || used > committed || committed > end
             || committed % 4096 != 0 || occupancy > capacity || objectCount < 0 || (ulong)objectCount > capacity / 24
-            || header[hasPinnedObjectsOffset] > 1 || header[40] > 2)
+            || !TryReadFlag(hasPinnedObjectsOffset, out var hasPinnedObjects) || header[40] > 2)
         {
             return null;
         }
@@ -55,7 +61,7 @@ internal sealed class SatoriRegionProbe(
         if (!Same(16, 4) || !Same(24, 17) || !Same(64, 16)
             || !Same(usedEndOffset, 8) || !Same(committedEndOffset, 8)
             || !Same(containingQueueOffset, 8) || !Same(occupancyOffset, 8)
-            || !Same(objectCountOffset, 4) || !Same(hasPinnedObjectsOffset, 1))
+            || !Same(objectCountOffset, 4))
         {
             return null;
         }
@@ -68,7 +74,7 @@ internal sealed class SatoriRegionProbe(
         }
 
         return new(page, pageEnd, generation, kind, (RegionReuseLevel)header[40], used, committed,
-            allocationStart, allocationEnd, (long)occupancy, objectCount, header[hasPinnedObjectsOffset] != 0);
+            allocationStart, allocationEnd, (long)occupancy, objectCount, hasPinnedObjects);
     }
 
     private bool Same(int offset, int length) => header.AsSpan(offset, length).SequenceEqual(repeated.AsSpan(offset, length));
