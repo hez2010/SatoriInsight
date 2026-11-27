@@ -8,6 +8,8 @@ internal class LayoutVariant01 : ISatoriLayoutVariant
 {
     public virtual int PullRequest => 74;
 
+    public virtual long? ReadCandidateOccupancy(IEnumerable<SatoriRegionProbe> regions) => null;
+
     public virtual SatoriPageInfo? ReadPage(SatoriPageProbe page) => page.ReadContiguousRegions();
 
     public virtual bool TryMatch(SatoriHeapProbe heap, out GCLatencyMode latencyMode)

@@ -87,6 +87,38 @@ public class RegionMetadataTests
 
     public static bool SupportsRegionTarget => OperatingSystem.IsWindows();
 
+    [Fact]
+    public async Task RegionOccupancyTimelinePreservesTotalsZerosAndGapsDuringReplay()
+    {
+        const long mib = 1024 * 1024;
+        var sample = RegionTestData.Sample();
+        var first = sample.Regions[0];
+        var pinned = first with { Header = first.Header! with { HasPinnedObjects = true, ReportedOccupancyBytes = mib } };
+        var second = sample.Regions[1];
+        var unassigned = second with
+        {
+            Generation = HeapGeneration.Unassigned,
+            Header = second.Header! with { Generation = -1, HasPinnedObjects = true, ReportedOccupancyBytes = mib }
+        };
+        var buffer = new LiveTelemetryBuffer();
+        var complete = sample with { Regions = [pinned, unassigned], RelocationCandidateOccupancyBytes = mib / 2 };
+        buffer.RegionSample(complete, 1);
+        buffer.RegionSample(complete with { Complete = false, SkippedRegions = 1 }, 2);
+        buffer.RegionSample(sample, 3); // A collector without relocation tags still reports pinning.
+        buffer.RegionSample(sample with { Regions = [], RelocationCandidateOccupancyBytes = 0 }, 4);
+
+        var frame = buffer.Read(4);
+        var session = new SavedSession(SessionStorage.CurrentSchemaVersion, "local-eventpipe", null, 4, [], [], null,
+            frame.Health, [], [], [], frame.Topology, frame.GcCounts, [], []);
+        await using var vm = new MainViewModel();
+        await vm.ImportSessionAsync(SessionStorage.Write(session));
+        vm.SelectPeriod(1, 3);
+        vm.ZoomToSelection();
+        Assert.True(vm.HasCandidateHistory && vm.HasPinnedRegionHistory && vm.HasHistory);
+        Assert.Equal(new double?[] { 0.5, null, null, 0 }, vm.RegionHistory.Select(point => point.RelocationCandidateMiB));
+        Assert.Equal(new double?[] { 1, null, 0, 0 }, vm.RegionHistory.Select(point => point.PinnedRegionMiB));
+    }
+
     public static bool SupportsLiveRegionTarget => OperatingSystem.IsWindows() || OperatingSystem.IsLinux();
 
     [Fact(Timeout = 30000, SkipUnless = nameof(SupportsLiveRegionTarget), Skip = "Requires Windows or Linux process inspection.")]

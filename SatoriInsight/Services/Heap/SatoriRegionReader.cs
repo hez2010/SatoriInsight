@@ -302,6 +302,7 @@ public sealed class SatoriRegionReader
             }
 
             var heapModes = new List<GCLatencyMode?>();
+            long? candidateOccupancy = 0;
 
             var regionsByHeap = stableRegions.ToLookup(region => region.Page.Info.Heap);
 
@@ -343,6 +344,10 @@ public sealed class SatoriRegionReader
                 var selected = System.Numerics.BitOperations.TrailingZeroCount((uint)candidates);
                 var layout = SatoriLayouts.All[selected];
                 heapModes.Add(modes[selected]);
+                // Without a recycler match, a candidate tag could just be padding in an older header.
+                candidateOccupancy += matched != 0 && complete
+                    ? layout.ReadCandidateOccupancy(heapRegions.Select(region => region.Probe))
+                    : null;
 
                 foreach (var region in heapRegions)
                 {
@@ -365,7 +370,7 @@ public sealed class SatoriRegionReader
                 return Result(true, [], "No supported, consistent Satori region layout was found. Try capturing again.");
             }
 
-            return Result(true, output.ToArray());
+            return Result(true, output.ToArray()) with { RelocationCandidateOccupancyBytes = complete ? candidateOccupancy : null };
         }
         catch (SamplingBudgetException)
         {

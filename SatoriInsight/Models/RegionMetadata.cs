@@ -59,4 +59,12 @@ public sealed record RegionHeaderInfo(
 }
 
 public sealed record RegionMapSampleInfo(
-    double Seconds, int RegionCount, int SkippedRegions, bool Complete, long BytesRead, double ReadMilliseconds, string? Error = null);
+    double Seconds, int RegionCount, int SkippedRegions, bool Complete, long BytesRead, double ReadMilliseconds, string? Error = null,
+    long? RelocationCandidateOccupancyBytes = null, long? PinnedRegionOccupancyBytes = null)
+{
+    [JsonIgnore]
+    public double? RelocationCandidateMiB => RelocationCandidateOccupancyBytes / 1_048_576d;
+
+    [JsonIgnore]
+    public double? PinnedRegionMiB => PinnedRegionOccupancyBytes / 1_048_576d;
+}

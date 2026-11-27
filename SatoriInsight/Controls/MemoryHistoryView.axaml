@@ -13,20 +13,30 @@
             <Button Grid.Column="1" Content="Zoom to selection" Click="Zoom_Click" IsEnabled="{Binding CanZoomToSelection}" Classes="secondary" Padding="8,3" />
             <Button Grid.Column="2" Content="Zoom out" Click="ZoomOut_Click" IsVisible="{Binding IsTimelineZoomed}" Classes="secondary" Padding="8,3" />
         </Grid>
-        <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,2,0,0">
-            <StackPanel Orientation="Horizontal" Spacing="5">
+        <WrapPanel Margin="0,2,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="5" Margin="0,0,16,0">
                 <Rectangle Width="12" Height="2" Fill="{StaticResource AccentBrush}" />
                 <TextBlock Text="Managed heap (MiB)" Classes="muted" FontSize="10" />
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="5">
+            <StackPanel Orientation="Horizontal" Spacing="5" Margin="0,0,16,0">
                 <Rectangle Width="12" Height="2" Fill="#63748A" />
                 <TextBlock Text="Committed (MiB)" Classes="muted" FontSize="10" />
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="5">
+            <StackPanel Orientation="Horizontal" Spacing="5" Margin="0,0,16,0">
                 <Rectangle Width="12" Height="2" Fill="#69B7DF" />
                 <TextBlock Text="RSS (MiB)" Classes="muted" FontSize="10" />
             </StackPanel>
-        </StackPanel>
+            <StackPanel IsVisible="{Binding HasCandidateHistory}" Orientation="Horizontal" Spacing="5" Margin="0,0,16,0"
+                ToolTip.Tip="Reported occupancy of regions tagged for incremental relocation at the time of sampling.">
+                <Rectangle Width="12" Height="2" Fill="#C39CEB" />
+                <TextBlock Text="Relocation candidate occupancy (MiB)" Classes="muted" FontSize="10" />
+            </StackPanel>
+            <StackPanel IsVisible="{Binding HasPinnedRegionHistory}" Orientation="Horizontal" Spacing="5"
+                ToolTip.Tip="Reported occupancy of all objects in regions with pins, including their movable objects.">
+                <Rectangle Width="12" Height="2" Fill="#EDB875" />
+                <TextBlock Text="Occupancy in regions with pins (MiB)" Classes="muted" FontSize="10" />
+            </StackPanel>
+        </WrapPanel>
         <Grid Height="110">
             <charts:CartesianChart Name="MemoryChart" IsVisible="{Binding HasHistory}" Height="110" ShowLegend="False" IsAnimationEnabled="False"
                 IsTooltipEnabled="True" AxisBrush="#354052" GridLineBrush="#222C3B" LabelForeground="#8795A9" Background="Transparent">
@@ -44,6 +54,10 @@
                         Stroke="#B7EE81" StrokeThickness="2" ShowMarkers="True" MarkerSize="3" MarkerFill="#B7EE81" />
                     <charts:LineSeries Title="RSS MiB" ItemsSource="{Binding ProcessHistory}" CategoryPath="Seconds" ValuePath="ResidentMiB" EmptyPointMode="Gap"
                         Stroke="#69B7DF" StrokeThickness="1.5" ShowMarkers="True" MarkerSize="3" MarkerFill="#69B7DF" />
+                    <charts:LineSeries Title="Relocation candidate occupancy (MiB)" ItemsSource="{Binding RegionHistory}" CategoryPath="Seconds" ValuePath="RelocationCandidateMiB"
+                        EmptyPointMode="Gap" Stroke="#C39CEB" StrokeThickness="1.5" ShowMarkers="True" MarkerSize="3" MarkerFill="#C39CEB" />
+                    <charts:LineSeries Title="Occupancy in regions with pins (MiB)" ItemsSource="{Binding RegionHistory}" CategoryPath="Seconds" ValuePath="PinnedRegionMiB"
+                        EmptyPointMode="Gap" Stroke="#EDB875" StrokeThickness="1.5" ShowMarkers="True" MarkerSize="3" MarkerFill="#EDB875" />
                 </charts:CartesianChart.Series>
                 <charts:CartesianChart.PlotAreaContent>
                     <Grid IsHitTestVisible="False">

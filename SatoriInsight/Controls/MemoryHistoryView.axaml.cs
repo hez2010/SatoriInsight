@@ -22,6 +22,7 @@ public partial class MemoryHistoryView : UserControl
     // Chart CategoryPath and ValuePath resolve properties at runtime.
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(MetricPoint))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessMetricPoint))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(RegionMapSampleInfo))]
     public MemoryHistoryView()
     {
         InitializeComponent();

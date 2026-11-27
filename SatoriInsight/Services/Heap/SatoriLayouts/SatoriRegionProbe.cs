@@ -21,6 +21,17 @@ internal sealed class SatoriRegionProbe(
         return offset < length && header[offset] <= 1 && Same(offset, 1);
     }
 
+    // The selected layout has validated generation and occupancy on both reads.
+    internal long? ReadTaggedOccupancy(int tagOffset, int occupancyOffset)
+    {
+        if (!Same(tagOffset, 1))
+        {
+            return null;
+        }
+
+        return header[tagOffset] != 0 && I32(16) >= 0 ? (long)U64(occupancyOffset) : 0;
+    }
+
     internal RegionHeaderInfo? Read(
         int usedEndOffset, int committedEndOffset, int containingQueueOffset,
         int occupancyOffset, int objectCountOffset, int hasPinnedObjectsOffset)

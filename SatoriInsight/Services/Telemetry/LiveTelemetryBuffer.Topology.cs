@@ -201,8 +201,12 @@ public sealed partial class LiveTelemetryBuffer
         {
             Observe(at);
             var time = TopologyTimestamp(at);
+            var hasTotals = sample.Recognized && sample.Complete && sample.Error is null;
+            long? pinnedBytes = hasTotals ? sample.Regions.Sum(region =>
+                region.Header is { HasPinnedObjects: true, HasReportedOccupancy: true } header ? header.ReportedOccupancyBytes : 0L) : null;
             _regionSamples.Add(new(
-                time, sample.Regions.Length, sample.SkippedRegions, sample.Complete, sample.BytesRead, sample.ReadMilliseconds, sample.Error));
+                time, sample.Regions.Length, sample.SkippedRegions, sample.Complete, sample.BytesRead, sample.ReadMilliseconds, sample.Error,
+                hasTotals ? sample.RelocationCandidateOccupancyBytes : null, pinnedBytes));
 
             if (!sample.Recognized || sample.Error is not null)
             {

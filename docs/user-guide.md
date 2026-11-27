@@ -12,6 +12,8 @@ Choose **Launch process** to start an executable or .NET DLL with arguments, a w
 
 The overview shows heap sizes, allocation rate and its recorded maximum, generation counts, CPU time, elapsed time, and RSS. RSS includes resident managed and native memory. CPU time includes all threads and can exceed wall-clock time.
 
+On the heap timeline, **Relocation candidate occupancy** shows the MiB of objects in regions Satori has selected as potential relocation sources. Selection can end between samples. **Occupancy in regions with pins** includes every object in a region that reports a pin. Both series use complete region samples. A gap means the measurement was unavailable, while zero means no occupancy was observed in that group.
+
 **GC mode** identifies the collector and its last reported latency mode. Generation sizes reflect reported measurements and can lag current allocation. Unavailable measurements appear as **—** or **Unknown**.
 
 Select a collection to inspect its timing, latency mode, and before/after memory sizes. Filter by generation or choose a bar or its x-axis label in **GC pause distribution** to show collections in that pause interval. A latency mode prefixed with **≈** is the last sampled mode before the collection completed; it may have changed between samples.

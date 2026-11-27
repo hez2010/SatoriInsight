@@ -15,6 +15,8 @@ internal interface ISatoriLayoutVariant
 
     // Returns null when this interpretation is invalid or the metadata changed.
     RegionHeaderInfo? Read(SatoriRegionProbe region);
+
+    long? ReadCandidateOccupancy(IEnumerable<SatoriRegionProbe> regions);
 }
 
 internal static class SatoriLayouts

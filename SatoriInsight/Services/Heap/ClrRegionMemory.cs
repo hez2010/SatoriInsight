@@ -83,4 +83,4 @@ public sealed class ClrRegionMemory : IRegionMemory, IDisposable
 
 public sealed record RegionReadResult(
     bool Recognized, HeapRegion[] Regions, int SkippedRegions, bool Complete, long BytesRead, double ReadMilliseconds, string? Error = null,
-    GCLatencyMode? LatencyMode = null);
+    GCLatencyMode? LatencyMode = null, long? RelocationCandidateOccupancyBytes = null);

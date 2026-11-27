@@ -30,4 +30,20 @@ internal sealed class LayoutVariant13 : LayoutVariant12
         var metadata = base.Read(region);
         return pinnedByMark && metadata is { HasPinnedObjects: false } ? metadata with { HasPinnedObjects = true } : metadata;
     }
+
+    public override long? ReadCandidateOccupancy(IEnumerable<SatoriRegionProbe> regions)
+    {
+        long bytes = 0;
+        foreach (var region in regions)
+        {
+            if (region.ReadTaggedOccupancy(tagOffset: 20, occupancyOffset: 168) is not { } occupancy)
+            {
+                return null;
+            }
+
+            bytes += occupancy;
+        }
+
+        return bytes;
+    }
 }

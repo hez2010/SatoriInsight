@@ -137,7 +137,9 @@ public static class SessionStorage
             foreach (var sample in topology.Samples)
             {
                 if (sample is null || !Time(sample.Seconds) || sample.Seconds < lastSample || sample.RegionCount < 0 || sample.SkippedRegions < 0
-                    || sample.BytesRead < 0 || !Nonnegative(sample.ReadMilliseconds))
+                    || sample.BytesRead < 0 || !Nonnegative(sample.ReadMilliseconds)
+                    || sample.RelocationCandidateOccupancyBytes < 0 || sample.PinnedRegionOccupancyBytes < 0
+                    || ((!sample.Complete || sample.Error is not null) && (sample.RelocationCandidateOccupancyBytes.HasValue || sample.PinnedRegionOccupancyBytes.HasValue)))
                 {
                     throw new InvalidDataException("Invalid region sampling history.");
                 }

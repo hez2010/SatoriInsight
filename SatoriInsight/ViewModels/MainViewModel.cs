@@ -200,6 +200,12 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
 
     public IReadOnlyList<MetricPoint> History => (_timelineAnchor ?? _frame).History;
 
+    public IReadOnlyList<RegionMapSampleInfo> RegionHistory => (_timelineAnchor ?? _frame).Topology?.Samples ?? [];
+
+    public bool HasCandidateHistory => RegionHistory.Any(sample => sample.RelocationCandidateOccupancyBytes.HasValue);
+
+    public bool HasPinnedRegionHistory => RegionHistory.Any(sample => sample.PinnedRegionOccupancyBytes.HasValue);
+
     public IReadOnlyList<GcPauseCounterPoint> PauseCounters => (_frame.PauseCounters ?? []).Where(p => p.EndSeconds >= WindowStartSeconds
         && p.EndSeconds <= SessionSeconds && (!IsPeriodSelected
         || p.EndSeconds - p.IntervalSeconds >= WindowStartSeconds)).ToArray();
@@ -264,7 +270,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
 
     public string CollectionCountsCaption => IsPeriodSelected ? "Selected period" : HasTimelineSelection ? "Through selected time" : "Since connection";
 
-    public bool HasHistory => History.Count > 0 || ProcessHistory.Any(sample => sample.ResidentBytes.HasValue);
+    public bool HasHistory => History.Count > 0 || ProcessHistory.Any(sample => sample.ResidentBytes.HasValue) || HasPinnedRegionHistory;
 
     public bool HasEvents => EventLog.Count > 0;
 
@@ -419,6 +425,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged, IAsyncDispos
             nameof(CommittedLabel), nameof(AllocationLabel), nameof(MaximumAllocationLabel), nameof(P99Label), nameof(P999Label), nameof(MinPauseLabel), nameof(MaxPauseLabel),
             nameof(P50Label), nameof(P90Label), nameof(P95Label), nameof(AveragePauseLabel),
             nameof(PausePercentLabel), nameof(GcCountLabel), nameof(PauseCountLabel), nameof(Events), nameof(History), nameof(Histogram),
+            nameof(RegionHistory), nameof(HasCandidateHistory), nameof(HasPinnedRegionHistory),
             nameof(HistogramMaximumCount), nameof(HistogramCountStep), nameof(HasPauses), nameof(P99WithUnitsLabel), nameof(PauseCounters),
             nameof(HasSessionData), nameof(HasCollectedData), nameof(CanPause), nameof(HasHistory), nameof(EmptyHistoryLabel), nameof(EmptyEventsLabel),
             nameof(GenerationSizes), nameof(LiveFragmentationLabel), nameof(HeapCountLabel), nameof(PauseEvents),
